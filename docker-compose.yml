@@ -1,0 +1,18 @@
+services:
+  mysql-bdd:
+    image: mysql:8.0
+    container_name: mysql-bdd
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: bdd_test_db
+      MYSQL_USER: testuser
+      MYSQL_PASSWORD: testpassword
+    ports:
+      - "3307:3306"
+    networks:
+      - bdd-network
+
+networks:
+  bdd-network:
+    driver: bridge
