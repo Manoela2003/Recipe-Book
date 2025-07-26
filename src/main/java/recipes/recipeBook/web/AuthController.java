@@ -24,7 +24,11 @@ public class AuthController {
     }
 
     @GetMapping("/login")
-    public String showLoginPage() {
+    public String showLoginPage(@RequestParam(value = "username", required = false) String username,
+                                Model model) {
+        UserDTO userDTO = new UserDTO();
+        userDTO.setUsername(username);
+        model.addAttribute("user", userDTO);
         return "login";
     }
 

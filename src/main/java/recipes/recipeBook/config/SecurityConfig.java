@@ -1,5 +1,6 @@
 package recipes.recipeBook.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,17 +20,19 @@ public class SecurityConfig {
     private static final String HOME_PAGE = "/home";
     private static final String LOGOUT_SUCCESS_URL = "/home";
     private static final String IMAGES = "/images/**";
+    private static final String RECIPES = "/recipes/**";
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", HOME_PAGE, REGISTER_PAGE, LOGIN_PAGE, CSS_RESOURCES, IMAGES).permitAll()
+                        .requestMatchers("/", HOME_PAGE, REGISTER_PAGE, LOGIN_PAGE, CSS_RESOURCES, IMAGES, RECIPES).permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage(LOGIN_PAGE)
                         .defaultSuccessUrl(HOME_PAGE, true)
+                        .failureHandler(customAuthenticationFailureHandler)
                         .permitAll()
                 )
                 .logout(logout -> logout
@@ -55,4 +58,7 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
+
+    @Autowired
+    private CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
 }

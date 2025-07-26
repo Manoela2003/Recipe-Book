@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/head :: head('Add Recipe | Recipe Book')}"/>
+    <link rel="stylesheet" th:href="@{/css/add-recipe2.css}">
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"/>
+<div class="container">
+    <h2 class="main-heading">Add New Recipe</h2>
+
+    <form th:action="@{/recipes/add}" th:object="${recipe}" method="post" enctype="multipart/form-data">
+
+        <div class="form-group">
+            <label for="title">Recipe Title</label>
+            <input type="text" id="title" th:field="*{title}" placeholder="Enter recipe name" required>
+            <div th:if="${#fields.hasErrors('title')}" class="error-message" th:errors="*{title}"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Short Description</label>
+            <textarea id="description" th:field="*{description}" rows="3" placeholder="Brief summary of the recipe"
+                      required></textarea>
+            <div th:if="${#fields.hasErrors('description')}" class="error-message" th:errors="*{description}"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="category">Category</label>
+            <select id="category" th:field="*{category}">
+                <option value="">-- Select Category --</option>
+                <option value="breakfast">Breakfast</option>
+                <option value="lunch">Lunch</option>
+                <option value="dinner">Dinner</option>
+                <option value="dessert">Dessert</option>
+                <option value="snack">Snack</option>
+            </select>
+            <div th:if="${#fields.hasErrors('category')}" class="error-message" th:errors="*{category}"></div>
+        </div>
+
+        <div class="form-group">
+            <label>Upload Images</label>
+
+            <div id="image-previews" class="image-preview-container">
+                <div th:if="${tempImages != null}">
+                    <th:block th:each="image, iterStat : ${tempImages}">
+                        <div class="preview-wrapper" th:data-index="${iterStat.index}" onclick="setMainImage(this)">
+                            <img th:src="'data:' + ${image.mimeType} + ';base64,' + ${T(org.apache.tomcat.util.codec.binary.Base64).encodeBase64String(image.data)}"
+                                 alt="Image Preview" class="image-preview"/>
+                            <input type="hidden" name="tempImageIndexes" th:value="${iterStat.index}"/>
+                        </div>
+                    </th:block>
+                </div>
+            </div>
+
+            <button type="button" class="add-image-btn" onclick="triggerFileInput()">+ Add Image</button>
+
+            <!-- Hidden file input -->
+            <input type="file" id="images" name="images" accept="image/*" style="display: none;" multiple
+                   onchange="handleImageUpload(event)">
+
+            <input type="hidden" name="mainImageIndex" id="mainImageIndex">
+        </div>
+
+        <div class="form-group">
+            <label>Ingredients</label>
+            <div id="ingredient-list" class="dynamic-list">
+                <div th:each="ingredient, iterStat : *{ingredients}" class="dynamic-list-item">
+                    <input type="text" th:field="*{ingredients[__${iterStat.index}__].name}" placeholder="Ingredient"
+                           required>
+                    <input type="number" th:field="*{ingredients[__${iterStat.index}__].amount}" step="1" min="0"
+                           placeholder="Amount" required>
+                    <input type="text" th:field="*{ingredients[__${iterStat.index}__].unit}" placeholder="Unit"
+                           required>
+                    <button type="button" class="remove-btn" onclick="removeItem(this)" aria-label="Remove item">
+                        &times;
+                    </button>
+                </div>
+            </div>
+            <div th:if="${#fields.hasErrors('ingredients')}" class="error-message" th:errors="*{ingredients}"></div>
+            <button type="button" class="add-btn" onclick="addIngredient()">+ Add Ingredient</button>
+        </div>
+
+        <div class="form-group">
+            <label>Preparation Steps</label>
+            <div id="step-list" class="dynamic-list steps-list">
+                <div th:each="step, iterStat : *{instructions}" class="dynamic-list-item">
+                    <input type="text" th:field="*{instructions[__${iterStat.index}__]}" placeholder="Describe step"
+                           required/>
+                    <button type="button" class="remove-btn" onclick="removeItem(this)" aria-label="Remove item">
+                        &times;
+                    </button>
+                </div>
+            </div>
+            <div th:if="${#fields.hasErrors('instructions')}" class="error-message" th:errors="*{instructions}"></div>
+            <button type="button" class="add-btn" onclick="addStep()">+ Add Step</button>
+        </div>
+
+        <div class="form-group">
+            <label for="prepTime">Preparation Time (minutes)</label>
+            <input type="number" id="prepTime" th:field="*{prepTime}" min="0">
+            <div th:if="${#fields.hasErrors('prepTime')}" class="error-message" th:errors="*{prepTime}"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="cookTime">Cooking Time (minutes)</label>
+            <input type="number" id="cookTime" th:field="*{cookTime}" min="0">
+            <div th:if="${#fields.hasErrors('cookTime')}" class="error-message" th:errors="*{cookTime}"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="servings">Servings</label>
+            <input type="number" id="servings" th:field="*{servings}">
+            <div th:if="${#fields.hasErrors('servings')}" class="error-message" th:errors="*{servings}"></div>
+        </div>
+
+        <div th:if="${errorMessage}" class="form-error">
+            <p th:text="${errorMessage}"></p>
+        </div>
+
+        <button class="main-btn" type="submit">Add Recipe</button>
+
+        <template id="ingredient-template">
+            <div class="dynamic-list-item">
+                <input type="text" name="" placeholder="Ingredient" required>
+                <input type="number" name="" step="0.01" min="0" placeholder="Amount" required>
+                <input type="text" name="" placeholder="Unit" required>
+                <button type="button" class="remove-btn" onclick="removeItem(this)" aria-label="Remove item">&times;
+                </button>
+            </div>
+        </template>
+    </form>
+</div>
+
+<script>
+    function addIngredient() {
+        const list = document.getElementById('ingredient-list');
+        const template = document.getElementById('ingredient-template');
+        const clone = template.content.cloneNode(true);
+
+        const index = list.querySelectorAll('.dynamic-list-item').length;
+
+        const inputs = clone.querySelectorAll('input');
+        if (inputs.length >= 3) {
+            inputs[0].name = `ingredients[${index}].name`;
+            inputs[1].name = `ingredients[${index}].amount`;
+            inputs[2].name = `ingredients[${index}].unit`;
+        }
+
+        list.appendChild(clone);
+    }
+
+    let stepIndex = 1;
+
+    function addStep() {
+        const list = document.getElementById('step-list');
+        const item = document.createElement('div');
+        item.className = 'dynamic-list-item';
+        item.setAttribute('data-index', stepIndex);
+
+        item.innerHTML = `
+        <input type="text" name="instructions[${stepIndex}]" placeholder="Describe step" required>
+        <button type="button" class="remove-btn" onclick="removeItem(this)" aria-label="Remove item">&times;</button>
+    `;
+
+        list.appendChild(item);
+        stepIndex++;
+    }
+
+    const imagePreviews = document.getElementById('image-previews');
+    const fileInput = document.getElementById('images');
+    const mainImageInput = document.getElementById('mainImageIndex');
+    let imageFiles = [];
+
+    function triggerFileInput() {
+        fileInput.click();
+    }
+
+    function handleImageUpload(event) {
+        const files = Array.from(event.target.files);
+        if (!files.length) return;
+
+        files.forEach(file => {
+            imageFiles.push(file);
+            displayImagePreview(file);
+        });
+
+        updateFileInput();
+    }
+
+    function displayImagePreview(file) {
+        const reader = new FileReader();
+        const index = imageFiles.length - 1;
+
+        reader.onload = function (e) {
+            const container = document.createElement('div');
+            container.classList.add('image-preview');
+            container.setAttribute('data-index', index);
+            container.onclick = () => selectMainImage(index);
+
+            const img = document.createElement('img');
+            img.src = e.target.result;
+
+            const removeBtn = document.createElement('button');
+            removeBtn.innerHTML = '&times;';
+            removeBtn.className = 'remove-image-btn';
+            removeBtn.onclick = (e) => {
+                e.stopPropagation();
+                removeImage(index);
+            };
+
+            container.appendChild(img);
+            container.appendChild(removeBtn);
+            imagePreviews.appendChild(container);
+
+            if (imageFiles.length === 1) {
+                selectMainImage(0);
+            }
+        };
+
+        reader.readAsDataURL(file);
+    }
+
+    function setMainImage(el) {
+        document.querySelectorAll('.preview-wrapper').forEach(div => {
+            div.classList.remove('main-image');
+        });
+        el.classList.add('main-image');
+        document.getElementById('mainImageIndex').value = el.dataset.index;
+    }
+
+    function removeImage(indexToRemove) {
+        imageFiles = imageFiles.filter((_, idx) => idx !== indexToRemove);
+        refreshPreviews();
+        updateFileInput();
+    }
+
+    function refreshPreviews() {
+        imagePreviews.innerHTML = '';
+        imageFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const container = document.createElement('div');
+                container.classList.add('image-preview');
+                container.setAttribute('data-index', index);
+                container.onclick = () => selectMainImage(index);
+
+                const img = document.createElement('img');
+                img.src = e.target.result;
+
+                const removeBtn = document.createElement('button');
+                removeBtn.innerHTML = '&times;';
+                removeBtn.className = 'remove-image-btn';
+                removeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    removeImage(index);
+                };
+
+                container.appendChild(img);
+                container.appendChild(removeBtn);
+                imagePreviews.appendChild(container);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        if (mainImageInput.value >= imageFiles.length) {
+            selectMainImage(0);
+        }
+    }
+
+    function updateFileInput() {
+        const dataTransfer = new DataTransfer();
+        imageFiles.forEach(file => dataTransfer.items.add(file));
+        fileInput.files = dataTransfer.files;
+    }
+
+    function removeItem(button) {
+        const item = button.parentElement;
+        item.remove();
+    }
+</script>
+</body>
+</html>
