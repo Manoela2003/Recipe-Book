@@ -1,0 +1,14 @@
+:root {
+    --primary-color: #D17676; /* Warm pink */
+    --secondary-color: #E8A0A0; /* Soft pink */
+    --background-color: #F8CBA6; /* Light peach */
+    --card-background: #FFF5E1; /* Light cream */
+    --text-color: #333333; /* Dark text */
+    --hover-color: #B56464; /* Darker pink for hover */
+}
+
+body {
+    font-family: "PT Sans", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+}

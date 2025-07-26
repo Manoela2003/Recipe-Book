@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/head :: head('Home | Recipe Book')}" />
+    <link rel="stylesheet" th:href="@{/css/home.css}">
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"/>
+<div class="container">
+    <section class="featured-recipes">
+        <h2>Featured Recipes</h2>
+        <div class="recipe-cards">
+            <div class="recipe-card" th:href="@{'/recipes/' + ${1}}">
+                <img th:src="@{/images/food1.jpg}" alt="Pasta Carbonara">
+                <h3>Pasta Carbonara</h3>
+                <p>Cooking Time: 30 min</p>
+            </div>
+            <div class="recipe-card" th:href="@{'/recipes/' + ${2}}">
+                <img th:src="@{/images/food2.jpg}" alt="Chocolate Cake">
+                <h3>Chocolate Cake</h3>
+                <p>Cooking Time: 45 min</p>
+            </div>
+            <div class="recipe-card" th:href="@{'/recipes/' + ${3}}">
+                <img th:src="@{/images/food3.jpg}" alt="Caesar Salad">
+                <h3>Caesar Salad</h3>
+                <p>Cooking Time: 20 min</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="categories">
+        <h2>Browse by Category</h2>
+        <div class="category-circles">
+            <a href="/recipes/chicken" class="category-circle">
+                <img th:src="@{/images/food2.jpg}" alt="Chicken" />
+                <p>Chicken</p>
+            </a>
+            <a href="/recipes/pork" class="category-circle">
+                <img th:src="@{/images/food3.jpg}" alt="Pork" />
+                <p>Pork</p>
+            </a>
+            <a href="/recipes/sweets" class="category-circle">
+                <img th:src="@{/images/food1.jpg}" alt="Sweets" />
+                <p>Sweets</p>
+            </a>
+            <a href="/recipes/salads" class="category-circle">
+                <img th:src="@{/images/food2.jpg}" alt="Salads" />
+                <p>Salads</p>
+            </a>
+            <!-- Add more categories as needed -->
+        </div>
+    </section>
+</div>
+</body>
+</html>

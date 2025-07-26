@@ -7,6 +7,7 @@ import recipes.recipeBook.dto.mapper.UserDTOToUserMapper;
 import recipes.recipeBook.entity.User;
 import recipes.recipeBook.exception.DuplicateEmailException;
 import recipes.recipeBook.exception.DuplicateUsernameException;
+import recipes.recipeBook.exception.NotFoundException;
 import recipes.recipeBook.repository.UserRepository;
 import recipes.recipeBook.service.UserService;
 
@@ -31,5 +32,10 @@ public class UserServiceImpl implements UserService {
         }
 
         return userRepository.save(UserDTOToUserMapper.map(userDTO));
+    }
+
+    @Override
+    public User getUserByUsername(String username) {
+        return userRepository.findByUsername(username).orElseThrow(() -> new NotFoundException(username));
     }
 }

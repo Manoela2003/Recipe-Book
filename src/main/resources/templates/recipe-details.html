@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/head :: head('Recipe Details | Recipe Book')}" />
+    <link rel="stylesheet" th:href="@{/css/recipe-details.css}">
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"/>
+
+<div class="recipe-details-container">
+    <h1 class="recipe-title" th:text="${recipe.title}"></h1>
+
+    <img th:src="${recipe.getImageBase64()}" alt="Recipe Image" class="recipe-image" loading="lazy">
+
+    <div class="scale-buttons">
+        <button class="scale-btn" onclick="scaleIngredients(1)">1x</button>
+        <button class="scale-btn" onclick="scaleIngredients(2)">2x</button>
+        <button class="scale-btn" onclick="scaleIngredients(3)">3x</button>
+    </div>
+
+    <ul id="ingredients-list" class="ingredient-list">
+        <li class="ingredient-item" th:each="ingredient : ${recipe.ingredients}"
+            th:data-amount="${ingredient.amount}"
+            th:data-unit="${ingredient.unit}"
+            th:data-name="${ingredient.name}">
+            <span class="ingredient-text"
+                  th:text="${ingredient.amount} + ' ' + ${ingredient.unit} + ' ' + ${ingredient.name}"></span>
+        </li>
+    </ul>
+
+    <h3 class="instructions-title">Instructions</h3>
+    <ol>
+        <li th:each="step : ${recipe.instructions}" th:text="${step.instruction}"></li>
+    </ol>
+</div>
+
+<script>
+    function scaleIngredients(multiplier) {
+        const items = document.querySelectorAll("#ingredients-list li");
+        items.forEach(item => {
+            const amount = parseFloat(item.dataset.amount);
+            const unit = item.dataset.unit;
+            const name = item.dataset.name;
+            const newAmount = (amount * multiplier).toFixed(2);
+            item.querySelector("span").innerText = `${newAmount} ${unit} ${name}`;
+        });
+    }
+</script>
+</body>
+</html>

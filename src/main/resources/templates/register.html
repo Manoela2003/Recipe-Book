@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register | Recipe Book</title>
+    <th:block th:replace="~{fragments/head :: head('Register | Recipe Book')}" />
     <link rel="stylesheet" th:href="@{/css/form.css}">
 </head>
 <body>
@@ -13,27 +11,26 @@
     <h2 class="main-heading">Create Your Account</h2>
 
     <form th:action="@{/register}" th:object="${user}" method="post">
-        <div class="input-group">
-            <input class="main-input" type="text" th:field="*{firstName}" placeholder="First Name" required>
-            <input class="main-input" type="text" th:field="*{lastName}" placeholder="Last Name" required>
-        </div>
+        <input class="main-input" type="text" th:field="*{firstName}" placeholder="First Name" required>
+
+        <input class="main-input" type="text" th:field="*{lastName}" placeholder="Last Name" required>
 
         <input class="main-input" type="text" th:field="*{username}" placeholder="Username" required>
+
         <input class="main-input" type="email" th:field="*{email}" placeholder="Email" required>
 
-        <div class="input-group">
-            <input class="main-input" type="password" th:field="*{password}" placeholder="Password" required>
-            <input class="main-input" type="password" name="confirmPassword" placeholder="Confirm Password" required>
-        </div>
+        <input class="main-input" type="password" th:field="*{password}" placeholder="Password" required>
 
-        <p th:if="${#fields.hasErrors('username')}" class="error-message" th:errors="*{username}"/>
-        <p th:if="${#fields.hasErrors('password')}" class="error-message" th:errors="*{password}"/>
+        <input class="main-input" type="password" name="confirmPassword" placeholder="Confirm Password" required>
+
+        <p th:if="${#fields.hasErrors('username')}" class="error-message" th:errors="*{username}"></p>
+        <p th:if="${#fields.hasErrors('password')}" class="error-message" th:errors="*{password}"></p>
         <p th:if="${error}" class="error-message" th:text="${error}"></p>
 
         <button class="main-btn" type="submit">Register</button>
     </form>
 
-    <p>Already have an account? <a th:href="@{/login}">Login</a></p>
+    <p>Already have an account? <a class="link" th:href="@{/login}">Login</a></p>
 </div>
 </body>
 </html>

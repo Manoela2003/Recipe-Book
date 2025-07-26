@@ -1,0 +1,12 @@
+<nav th:fragment="nav" xmlns:th="http://www.thymeleaf.org" class="navbar">
+    <div class="nav-container">
+        <h1 class="logo"><a th:href="@{/home}">Recipe Book</a></h1>
+        <ul class="nav-links">
+            <li><a th:href="@{/home}" th:classappend="${requestURI == '/home'} ? 'active' : ''">Home</a></li>
+            <li><a th:href="@{/recipes}" th:classappend="${requestURI == '/recipes'} ? 'active' : ''">Recipes</a></li>
+            <li><a th:href="@{/recipes/add}" >Add Recipe</a></li>
+            <li><a th:href="@{/about}" >About</a></li>
+            <li><a th:href="@{/contact}" >Contact</a></li>
+        </ul>
+    </div>
+</nav>
