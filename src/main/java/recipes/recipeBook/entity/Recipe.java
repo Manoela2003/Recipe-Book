@@ -16,7 +16,17 @@ public class Recipe {
     private Long id;
     private String title;
     private String description;
-    private String category;
+
+    @Enumerated(EnumType.STRING)
+    private RecipeCategory primaryCategory;
+
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+            name = "recipe_tags",
+            joinColumns = @JoinColumn(name = "recipe_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private List<Tag> tags = new ArrayList<>();
 
     @ManyToOne
     private User author;
