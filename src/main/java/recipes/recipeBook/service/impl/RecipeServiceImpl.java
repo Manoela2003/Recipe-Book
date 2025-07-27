@@ -13,6 +13,7 @@ import recipes.recipeBook.exception.NotFoundException;
 import recipes.recipeBook.repository.RecipeRepository;
 import recipes.recipeBook.service.ImageService;
 import recipes.recipeBook.service.RecipeService;
+import recipes.recipeBook.service.TagService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,12 +21,12 @@ import java.util.List;
 @Service
 public class RecipeServiceImpl implements RecipeService {
     private RecipeRepository recipeRepository;
-    private ImageService imageService;
+    private TagService tagService;
 
     @Autowired
-    public RecipeServiceImpl(RecipeRepository recipeRepository, ImageService imageService) {
+    public RecipeServiceImpl(RecipeRepository recipeRepository, TagService tagService) {
         this.recipeRepository = recipeRepository;
-        this.imageService = imageService;
+        this.tagService = tagService;
     }
 
     @Override
@@ -51,7 +52,7 @@ public class RecipeServiceImpl implements RecipeService {
             throw new DuplicateRecipeException(recipeDTO.getTitle());
         }
 
-        Recipe recipe = RecipeDTOToRecipeMapper.map(recipeDTO, imageDTOs, user, imageService);
+        Recipe recipe = RecipeDTOToRecipeMapper.map(recipeDTO, user, tagService);
         recipe = recipeRepository.save(recipe);
 
         if (imageDTOs != null && !imageDTOs.isEmpty()) {

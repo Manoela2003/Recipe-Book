@@ -4,6 +4,7 @@ import recipes.recipeBook.dto.ImageDTO;
 import recipes.recipeBook.dto.RecipeDTO;
 import recipes.recipeBook.entity.*;
 import recipes.recipeBook.service.ImageService;
+import recipes.recipeBook.service.TagService;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -12,12 +13,22 @@ import java.util.stream.Collectors;
 
 public class RecipeDTOToRecipeMapper {
 
-    public static Recipe map(RecipeDTO dto, List<ImageDTO> imageDTOs, User user, ImageService imageService) {
+    public static Recipe map(RecipeDTO dto, User user, TagService tagService) {
         Recipe recipe = new Recipe();
         recipe.setAuthor(user);
         recipe.setTitle(dto.getTitle());
         recipe.setDescription(dto.getDescription());
-        recipe.setCategory(dto.getCategory());
+        recipe.setPrimaryCategory(dto.getPrimaryCategory());
+        List<Tag> tags = new ArrayList<>();
+        if (dto.getTagNames() != null && !dto.getTagNames().isEmpty()) {
+            for (String tagName : dto.getTagNames()) {
+                if (tagName != null && !tagName.trim().isEmpty()) {
+                    Tag tag = tagService.findOrCreateTag(tagName.trim());
+                    tags.add(tag);
+                }
+            }
+        }
+        recipe.setTags(tags);
         List<RecipeStep> steps = new ArrayList<>();
         List<String> stepTexts = dto.getInstructions();
 

@@ -25,16 +25,38 @@
         </div>
 
         <div class="form-group">
-            <label for="category">Category</label>
-            <select id="category" th:field="*{category}">
+            <label for="primaryCategory">Primary Category</label>
+            <select id="primaryCategory" th:field="*{primaryCategory}">
                 <option value="">-- Select Category --</option>
-                <option value="breakfast">Breakfast</option>
-                <option value="lunch">Lunch</option>
-                <option value="dinner">Dinner</option>
-                <option value="dessert">Dessert</option>
-                <option value="snack">Snack</option>
+                <option th:each="category : ${T(recipes.recipeBook.entity.RecipeCategory).values()}"
+                        th:value="${category}"
+                        th:text="${category.displayName}">
+                </option>
             </select>
-            <div th:if="${#fields.hasErrors('category')}" class="error-message" th:errors="*{category}"></div>
+            <div th:if="${#fields.hasErrors('primaryCategory')}" class="error-message" th:errors="*{primaryCategory}"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="tag-input">Tags (Optional)</label>
+            <div class="tag-input-container">
+                <div id="selected-tags" class="selected-tags">
+                    <span th:each="tagName, iterStat : *{tagNames}" class="tag-chip" th:text="${tagName}">
+                        <button type="button" class="tag-remove" onclick="removeTag(this)" th:data-tag="${tagName}">&times;</button>
+                        <input type="hidden" th:field="*{tagNames[__${iterStat.index}__]}">
+                    </span>
+                </div>
+                <input type="text" id="tag-input" placeholder="Add tags (cuisine, dietary, cooking method...)"
+                       autocomplete="off" onkeydown="handleTagInput(event)" oninput="showTagSuggestions(this.value)">
+                <div id="tag-suggestions" class="tag-suggestions"></div>
+            </div>
+            <div class="popular-tags">
+                <span>Popular tags:</span>
+                <button type="button" class="popular-tag" onclick="addPopularTag('Vegetarian')">Vegetarian</button>
+                <button type="button" class="popular-tag" onclick="addPopularTag('Quick & Easy')">Quick & Easy</button>
+                <button type="button" class="popular-tag" onclick="addPopularTag('Healthy')">Healthy</button>
+                <button type="button" class="popular-tag" onclick="addPopularTag('Italian')">Italian</button>
+                <button type="button" class="popular-tag" onclick="addPopularTag('One-Pot')">One-Pot</button>
+            </div>
         </div>
 
         <div class="form-group">
@@ -179,16 +201,18 @@
     let newImageCounter = 0;
 
     document.addEventListener('DOMContentLoaded', function() {
+        loadAvailableTags();
+
         const mainImage = document.querySelector('.preview-wrapper.main-image');
         if (mainImage && mainImageInput.value === '') {
             mainImageInput.value = mainImage.dataset.index;
         }
 
-        // Clear the file input if we have temp images (from validation error)
         const tempImages = document.querySelectorAll('.preview-wrapper[data-type="temp"]');
         if (tempImages.length > 0) {
             fileInput.value = '';
             imageFiles = [];
+            newImageCounter = tempImages.length;
         }
     });
 
@@ -235,7 +259,6 @@
             container.appendChild(removeBtn);
             imagePreviews.appendChild(container);
 
-            // If this is the first image, make it the main image
             if (getAllImages().length === 1) {
                 setMainImage(container);
             }
@@ -245,22 +268,19 @@
     }
 
     function setMainImage(element) {
-        // Remove main-image class from all images
         getAllImages().forEach(img => {
             img.classList.remove('main-image');
         });
 
-        // Add main-image class to selected element
         element.classList.add('main-image');
 
-        // Update hidden input with the appropriate value
         if (element.dataset.type === 'temp') {
             mainImageInput.value = element.dataset.index;
         } else if (element.dataset.type === 'new') {
-            // For new images, we need to find its position among all images
-            const allImages = getAllImages();
-            const index = Array.from(allImages).indexOf(element);
-            mainImageInput.value = index;
+            const tempImages = document.querySelectorAll('.preview-wrapper[data-type="temp"]');
+            const newImages = document.querySelectorAll('.preview-wrapper[data-type="new"]');
+            const newImageIndex = Array.from(newImages).indexOf(element);
+            mainImageInput.value = tempImages.length + newImageIndex;
         }
     }
 
@@ -273,17 +293,14 @@
         const wrapper = button.closest('.preview-wrapper');
         const wasMainImage = wrapper.classList.contains('main-image');
 
-        // Remove the corresponding hidden input
         const tempImageIndex = wrapper.getAttribute('data-index');
         const hiddenInput = wrapper.querySelector('input[name="tempImageIndexes"]');
         if (hiddenInput) {
             hiddenInput.remove();
         }
 
-        // Remove the wrapper
         wrapper.remove();
 
-        // If this was the main image, select a new main image
         if (wasMainImage) {
             const remainingImages = getAllImages();
             if (remainingImages.length > 0) {
@@ -297,20 +314,16 @@
     function removeNewImage(container, imageId) {
         const wasMainImage = container.classList.contains('main-image');
 
-        // Find and remove the file from imageFiles array
         const newImageContainers = imagePreviews.querySelectorAll('.preview-wrapper[data-type="new"]');
         const containerIndex = Array.from(newImageContainers).indexOf(container);
         if (containerIndex !== -1) {
             imageFiles.splice(containerIndex, 1);
         }
 
-        // Remove the container
         container.remove();
 
-        // Update the file input
         updateFileInput();
 
-        // If this was the main image, select a new main image
         if (wasMainImage) {
             const remainingImages = getAllImages();
             if (remainingImages.length > 0) {
@@ -330,6 +343,114 @@
     function removeItem(button) {
         const item = button.parentElement;
         item.remove();
+    }
+
+    let availableTags = [];
+
+    function loadAvailableTags() {
+        fetch('/api/tags/search?query=')
+            .then(response => response.json())
+            .then(tags => {
+                availableTags = tags;
+            })
+            .catch(error => console.error('Error loading tags:', error));
+    }
+
+    function handleTagInput(event) {
+        if (event.key === 'Enter' || event.key === ',') {
+            event.preventDefault();
+            const input = event.target;
+            const tagName = input.value.trim();
+            if (tagName) {
+                addTag(tagName);
+                input.value = '';
+                hideSuggestions();
+            }
+        } else if (event.key === 'Escape') {
+            hideSuggestions();
+        }
+    }
+
+    function showTagSuggestions(query) {
+        const suggestionsDiv = document.getElementById('tag-suggestions');
+
+        if (!query.trim()) {
+            hideSuggestions();
+            return;
+        }
+
+        const filteredTags = availableTags.filter(tag =>
+            tag.name.toLowerCase().includes(query.toLowerCase()) &&
+            !isTagSelected(tag.name)
+        );
+
+        if (filteredTags.length === 0) {
+            hideSuggestions();
+            return;
+        }
+
+        suggestionsDiv.innerHTML = '';
+        filteredTags.slice(0, 8).forEach(tag => {
+            const suggestion = document.createElement('div');
+            suggestion.className = 'tag-suggestion';
+            suggestion.textContent = tag.name;
+            suggestion.onclick = () => {
+                addTag(tag.name);
+                document.getElementById('tag-input').value = '';
+                hideSuggestions();
+            };
+            suggestionsDiv.appendChild(suggestion);
+        });
+
+        suggestionsDiv.style.display = 'block';
+    }
+
+    function hideSuggestions() {
+        document.getElementById('tag-suggestions').style.display = 'none';
+    }
+
+    function addTag(tagName) {
+        const trimmedTag = tagName.trim();
+        if (!trimmedTag || isTagSelected(trimmedTag)) {
+            return;
+        }
+
+        const selectedTagsDiv = document.getElementById('selected-tags');
+        const currentIndex = document.querySelectorAll('#selected-tags .tag-chip').length;
+        const tagChip = document.createElement('span');
+        tagChip.className = 'tag-chip';
+        tagChip.innerHTML = `
+            ${trimmedTag}
+            <button type="button" class="tag-remove" onclick="removeTag(this)" data-tag="${trimmedTag}">&times;</button>
+            <input type="hidden" name="tagNames[${currentIndex}]" value="${trimmedTag}">
+        `;
+
+        selectedTagsDiv.appendChild(tagChip);
+    }
+
+    function addPopularTag(tagName) {
+        addTag(tagName);
+    }
+
+    function removeTag(button) {
+        const tagChip = button.closest('.tag-chip');
+        tagChip.remove();
+        reindexTags();
+    }
+
+    function reindexTags() {
+        const tagChips = document.querySelectorAll('#selected-tags .tag-chip');
+        tagChips.forEach((chip, index) => {
+            const hiddenInput = chip.querySelector('input[type="hidden"]');
+            if (hiddenInput) {
+                hiddenInput.name = `tagNames[${index}]`;
+            }
+        });
+    }
+
+    function isTagSelected(tagName) {
+        const selectedTags = document.querySelectorAll('#selected-tags input[type="hidden"]');
+        return Array.from(selectedTags).some(input => input.value.toLowerCase() === tagName.toLowerCase());
     }
 </script>
 </body>

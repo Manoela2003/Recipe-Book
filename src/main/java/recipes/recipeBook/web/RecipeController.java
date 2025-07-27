@@ -1,6 +1,5 @@
 package recipes.recipeBook.web;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,12 +17,10 @@ import recipes.recipeBook.entity.CustomUserDetails;
 import recipes.recipeBook.entity.Recipe;
 import recipes.recipeBook.exception.DuplicateRecipeException;
 import recipes.recipeBook.exception.NotFoundException;
-import recipes.recipeBook.service.ImageService;
 import recipes.recipeBook.service.RecipeService;
 import recipes.recipeBook.service.TempImageService;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -85,7 +82,6 @@ public class RecipeController {
                             @RequestParam(value = "tempImageIds", required = false) List<String> tempImageIds,
                             @RequestParam(value = "mainImageIndex", required = false) String mainImageIndexParam,
                             RedirectAttributes redirectAttributes,
-                            Model model,
                             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         List<TempImageDTO> existingTempImages = new ArrayList<>();
