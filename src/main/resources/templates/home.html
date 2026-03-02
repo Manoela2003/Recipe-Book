@@ -7,23 +7,29 @@
 <body>
 <div th:replace="~{fragments/nav :: nav}"/>
 <div class="container">
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1>Discover & Share <span class="highlight">Amazing</span> Recipes</h1>
+            <p>Your digital cookbook for every occasion.</p>
+            <div class="hero-stats">
+                <span><strong th:text="${totalRecipes}">0</strong> Recipes</span>
+                <span><strong th:text="${totalUsers}">0</strong> Cooks</span>
+            </div>
+        </div>
+    </div>
     <section class="featured-recipes">
-        <h2>Featured Recipes</h2>
+        <h2>Latest Recipes</h2>
         <div class="recipe-cards">
-            <div class="recipe-card" th:href="@{'/recipes/' + ${1}}">
-                <img th:src="@{/images/food1.jpg}" alt="Pasta Carbonara">
-                <h3>Pasta Carbonara</h3>
-                <p>Cooking Time: 30 min</p>
-            </div>
-            <div class="recipe-card" th:href="@{'/recipes/' + ${2}}">
-                <img th:src="@{/images/food2.jpg}" alt="Chocolate Cake">
-                <h3>Chocolate Cake</h3>
-                <p>Cooking Time: 45 min</p>
-            </div>
-            <div class="recipe-card" th:href="@{'/recipes/' + ${3}}">
-                <img th:src="@{/images/food3.jpg}" alt="Caesar Salad">
-                <h3>Caesar Salad</h3>
-                <p>Cooking Time: 20 min</p>
+            <div th:each="recipe : ${recipes}" class="recipe-card"
+                 th:onclick="|window.location.href='/recipes/' + ${recipe.id}|">
+
+                <img th:src="${recipe.imageUrl}" th:alt="${recipe.title}">
+
+                <h3 th:text="${recipe.title}">Recipe Title</h3>
+                <div class="recipe-info">
+                    <p th:text="'Time: ' + ${recipe.cookTime + recipe.prepTime} + ' min'">Time: 30 min</p>
+                    <p class="category-tag" th:text="${recipe.primaryCategory.displayName}">Category</p>
+                </div>
             </div>
         </div>
     </section>
@@ -31,23 +37,12 @@
     <section class="categories">
         <h2>Browse by Category</h2>
         <div class="category-circles">
-            <a href="/recipes/chicken" class="category-circle">
-                <img th:src="@{/images/food2.jpg}" alt="Chicken" />
-                <p>Chicken</p>
+            <a th:each="cat : ${T(recipes.recipeBook.entity.RecipeCategory).values()}"
+               th:href="@{/recipes(category=${cat})}" class="category-circle">
+                <div class="circle-content">
+                    <span class="cat-name" th:text="${cat.displayName}">Category</span>
+                </div>
             </a>
-            <a href="/recipes/pork" class="category-circle">
-                <img th:src="@{/images/food3.jpg}" alt="Pork" />
-                <p>Pork</p>
-            </a>
-            <a href="/recipes/sweets" class="category-circle">
-                <img th:src="@{/images/food1.jpg}" alt="Sweets" />
-                <p>Sweets</p>
-            </a>
-            <a href="/recipes/salads" class="category-circle">
-                <img th:src="@{/images/food2.jpg}" alt="Salads" />
-                <p>Salads</p>
-            </a>
-            <!-- Add more categories as needed -->
         </div>
     </section>
 </div>

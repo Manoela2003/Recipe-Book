@@ -7,7 +7,7 @@
 
 .nav-container {
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: center;
     max-width: 1200px;
     margin: 0 auto;
@@ -19,13 +19,14 @@
     color: white;
     font-weight: bold;
     font-family: 'PT Sans', sans-serif;
-    margin-right: 50px;
 }
 
 .nav-links {
     list-style: none;
     display: flex;
     gap: 20px;
+    justify-content: center;
+    flex: 1;
 }
 
 .nav-links li {
@@ -40,7 +41,48 @@
     transition: color 0.3s;
 }
 
-.nav-links a:hover, .nav-links a.active {
+.nav-links a:hover,
+.nav-links a.active {
     color: var(--text-color);
 }
 
+
+.nav-right {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    width: 180px;
+}
+
+.nav-account,
+.nav-login {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    justify-content: flex-end;
+}
+
+.nav-account span {
+    color: white;
+    font-size: 1em;
+    font-weight: 500;
+}
+
+.logout-btn,
+.login-btn {
+    background-color: white;
+    color: var(--primary-color);
+    padding: 6px 14px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.9em;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.logout-btn:hover,
+.login-btn:hover {
+    background-color: var(--hover-color);
+    color: white;
+}

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/head :: head('Edit Recipe | Recipe Book')}"/>
+    <link rel="stylesheet" th:href="@{/css/edit-recipe.css}">
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<div class="edit-recipe-container">
+    <a th:href="@{'/recipes/' + ${recipe.id}}" class="back-link">
+        <i class="fa fa-arrow-left"></i> Back to Recipe
+    </a>
+
+    <h1 class="page-title">Edit Recipe</h1>
+
+    <form th:action="@{'/recipes/edit/' + ${recipe.id}}" th:object="${recipe}" method="post" enctype="multipart/form-data" class="edit-form">
+
+        <!-- Title -->
+        <div class="form-group">
+            <label for="title">Recipe Title</label>
+            <input type="text" id="title" th:field="*{title}" required>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" rows="4" th:field="*{description}" placeholder="Describe your recipe..."></textarea>
+        </div>
+
+        <!-- Category -->
+        <div class="form-group">
+            <label for="primaryCategory">Primary Category</label>
+            <select id="primaryCategory" th:field="*{primaryCategory}">
+                <option th:each="cat : ${T(recipes.recipeBook.entity.RecipeCategory).values()}"
+                        th:value="${cat}"
+                        th:text="${cat}"></option>
+            </select>
+        </div>
+
+        <!-- Tags -->
+        <div class="form-group">
+            <label for="tags">Tags (comma separated)</label>
+            <input type="text" id="tags" th:value="${#strings.listJoin(recipe.tags, ', ')}">
+            name="tagsInput" placeholder="e.g., dessert, quick, healthy">
+        </div>
+
+        <!-- Ingredients -->
+        <div class="form-group">
+            <label>Ingredients</label>
+            <div class="dynamic-list" id="ingredients-list">
+                <div class="ingredient-item" th:each="ingredient, iterStat : *{ingredients}">
+                    <input type="text" th:field="*{ingredients[__${iterStat.index}__].amount}" placeholder="Amount">
+                    <input type="text" th:field="*{ingredients[__${iterStat.index}__].unit}" placeholder="Unit">
+                    <input type="text" th:field="*{ingredients[__${iterStat.index}__].name}" placeholder="Ingredient name">
+                    <button type="button" class="remove-btn"><i class="fa fa-trash"></i></button>
+                </div>
+            </div>
+            <button type="button" class="add-btn" id="add-ingredient-btn"><i class="fa fa-plus"></i> Add Ingredient</button>
+        </div>
+
+        <!-- Instructions -->
+        <div class="form-group">
+            <label>Instructions</label>
+            <div class="dynamic-list" id="instructions-list">
+                <div class="instruction-item" th:each="step, iterStat : *{instructions}">
+                    <textarea th:field="*{instructions[__${iterStat.index}__].instruction}" rows="2"
+                              placeholder="Step details"></textarea>
+                    <button type="button" class="remove-btn"><i class="fa fa-trash"></i></button>
+                </div>
+            </div>
+            <button type="button" class="add-btn" id="add-instruction-btn"><i class="fa fa-plus"></i> Add Step</button>
+        </div>
+
+        <!-- Time & Servings -->
+        <div class="time-servings">
+            <div class="form-group small">
+                <label for="prepTime">Prep Time (mins)</label>
+                <input type="number" id="prepTime" min="0" th:field="*{prepTime}">
+            </div>
+            <div class="form-group small">
+                <label for="cookTime">Cook Time (mins)</label>
+                <input type="number" id="cookTime" min="0" th:field="*{cookTime}">
+            </div>
+            <div class="form-group small">
+                <label for="servings">Servings</label>
+                <input type="number" id="servings" min="1" th:field="*{servings}">
+            </div>
+        </div>
+
+        <!-- Images -->
+        <div class="form-group">
+            <label for="images">Recipe Images</label>
+            <input type="file" id="images" name="images" multiple>
+            <div class="image-preview">
+                <img th:each="img, iterStat : ${recipe.images}"
+                     th:src="${img.parseImage()}"
+                     alt="Recipe image preview">
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="form-actions">
+            <button type="submit" class="save-btn"><i class="fa fa-save"></i> Save Changes</button>
+            <a th:href="@{'/recipes/' + ${recipe.id}}" class="cancel-btn">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const ingredientContainer = document.getElementById('ingredients-list');
+        const instructionContainer = document.getElementById('instructions-list');
+        const addIngredientBtn = document.getElementById('add-ingredient-btn');
+        const addInstructionBtn = document.getElementById('add-instruction-btn');
+
+        addIngredientBtn.addEventListener('click', () => {
+            const div = document.createElement('div');
+            div.classList.add('ingredient-item');
+            div.innerHTML = `
+                <input type="text" name="newIngredientAmount" placeholder="Amount">
+                <input type="text" name="newIngredientUnit" placeholder="Unit">
+                <input type="text" name="newIngredientName" placeholder="Ingredient name">
+                <button type="button" class="remove-btn"><i class="fa fa-trash"></i></button>`;
+            ingredientContainer.appendChild(div);
+        });
+
+        addInstructionBtn.addEventListener('click', () => {
+            const div = document.createElement('div');
+            div.classList.add('instruction-item');
+            div.innerHTML = `
+                <textarea name="newInstruction" rows="2" placeholder="Step details"></textarea>
+                <button type="button" class="remove-btn"><i class="fa fa-trash"></i></button>`;
+            instructionContainer.appendChild(div);
+        });
+
+        document.body.addEventListener('click', e => {
+            if (e.target.closest('.remove-btn')) {
+                e.target.closest('.ingredient-item, .instruction-item')?.remove();
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

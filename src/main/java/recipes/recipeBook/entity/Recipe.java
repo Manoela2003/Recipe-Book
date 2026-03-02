@@ -39,13 +39,16 @@ public class Recipe {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Ingredient> ingredients;
 
-    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Image> images = new ArrayList<>();
     private Integer mainImageIndex;
 
     private long prepTime;
     private long cookTime;
     private int servings;
+
+    @Column(columnDefinition = "TEXT")
+    private String notes;
 
     @Transient
     private String imageBase64;
@@ -56,5 +59,19 @@ public class Recipe {
             return images.get(mainImageIndex);
         }
         return null;
+    }
+
+    @Transient
+    public String getImageBase64() {
+        Image mainImage = getMainImage();
+        return (mainImage != null) ? mainImage.parseImage() : null;
+    }
+
+    public String getImageUrl() {
+        String fullBase64String = getImageBase64();
+        if (fullBase64String == null || fullBase64String.isEmpty()) {
+            return "/images/cover-image-recipes.png";
+        }
+        return fullBase64String;
     }
 }

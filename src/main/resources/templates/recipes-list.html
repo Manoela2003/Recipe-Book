@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/head :: head('Recipes | Recipe Book')}"/>
+    <link rel="stylesheet" th:href="@{/css/recipes-list.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<div class="recipes-container">
+    <div class="page-header">
+        <h2 th:if="${isMyRecipes != null && isMyRecipes}">My Recipes</h2>
+        <h2 th:if="${isMyRecipes == null}" th:text="${selectedCategory != null ? selectedCategory.displayName + ' Recipes' : 'All Recipes'}"></h2>
+
+        <a th:if="${selectedCategory != null && isMyRecipes == null}" th:href="@{/recipes}" class="clear-filter-btn">
+            &times; Clear Filter
+        </a>
+    </div>
+
+    <div class="search-filter-container">
+        <form th:action="@{${requestURI}}" method="get" class="search-form">
+            <input type="text" name="query" th:value="${searchQuery}" placeholder="Search recipes by title..." class="search-input" autocomplete="off">
+            <input th:if="${selectedCategory != null}" type="hidden" name="category" th:value="${selectedCategory}">
+            <button type="submit" class="search-btn">Search</button>
+        </form>
+    </div>
+
+    <div class="recipes-grid">
+        <div class="recipe-card" th:each="recipe : ${recipes}">
+            <a th:href="@{/recipes/{id}(id=${recipe.id})}" class="recipe-link">
+
+                <div class="recipe-image-wrapper">
+                    <img th:if="${recipe.imageBase64 != null}"
+                         th:src="${recipe.imageBase64}"
+                         alt="Recipe Image"
+                         class="recipe-image"
+                         loading="lazy">
+
+                    <img th:unless="${recipe.imageBase64 != null}"
+                         src="/images/cover-image-recipes.png"
+                         alt="No image available"
+                         class="recipe-image"
+                         loading="lazy">
+                </div>
+
+                <div class="recipe-card-body">
+                    <h3 class="recipe-card-title" th:text="${recipe.title}"></h3>
+
+                    <div class="recipe-meta">
+                    <span class="recipe-time">
+                        <i class="fa fa-clock"></i>
+                        <span th:text="${recipe.prepTime + recipe.cookTime} + ' mins'"></span>
+                    </span>
+
+                        <span class="recipe-author">
+                        <i class="fa fa-user"></i>
+                        <span th:text="${recipe.author.username}"></span>
+                    </span>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div th:if="${recipes.totalPages > 1}" class="pagination-container">
+        <ul class="pagination">
+            <li class="page-item" th:classappend="${recipes.first} ? 'disabled' : ''">
+                <a class="page-link" th:href="@{/recipes(page=${recipes.number - 1}, size=${recipes.size})}">Previous</a>
+            </li>
+            <li class="page-item" th:each="i : ${#numbers.sequence(0, recipes.totalPages - 1)}" th:classappend="${i == recipes.number} ? 'active' : ''">
+                <a class="page-link" th:href="@{/recipes(page=${i}, size=${recipes.size})}" th:text="${i + 1}"></a>
+            </li>
+            <li class="page-item" th:classappend="${recipes.last} ? 'disabled' : ''">
+                <a class="page-link" th:href="@{/recipes(page=${recipes.number + 1}, size=${recipes.size})}">Next</a>
+            </li>
+        </ul>
+    </div>
+
+    <div th:if="${#lists.isEmpty(recipes.content)}" class="no-recipes">
+        <p>No recipes added yet. <a th:href="@{/recipes/add}">Add one now!</a></p>
+    </div>
+</div>
+</body>
+</html>
