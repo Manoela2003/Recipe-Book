@@ -1,50 +1,214 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <th:block th:replace="~{fragments/head :: head('Recipe Details | Recipe Book')}" />
+    <th:block th:replace="~{fragments/head :: head('Recipe Details | Recipe Book')}"/>
     <link rel="stylesheet" th:href="@{/css/recipe-details.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-<div th:replace="~{fragments/nav :: nav}"/>
+<div th:replace="~{fragments/nav :: nav}"></div>
 
-<div class="recipe-details-container">
-    <h1 class="recipe-title" th:text="${recipe.title}"></h1>
+<div class="recipe-container">
+    <a th:href="@{${backUrl}}" class="back-link">
+        <i class="fa fa-arrow-left"></i> <span th:text="${backText}">All Recipes</span>
+    </a>
 
-    <img th:src="${recipe.getImageBase64()}" alt="Recipe Image" class="recipe-image" loading="lazy">
+    <div class="recipe-header">
+        <div th:if="${successMessage}" class="alert success-alert">
+            <span th:text="${successMessage}"></span>
+            <button class="close-btn" onclick="this.parentElement.style.display='none';">&times;</button>
+        </div>
 
-    <div class="scale-buttons">
-        <button class="scale-btn" onclick="scaleIngredients(1)">1x</button>
-        <button class="scale-btn" onclick="scaleIngredients(2)">2x</button>
-        <button class="scale-btn" onclick="scaleIngredients(3)">3x</button>
+        <h1 class="recipe-title" th:text="${recipe.title}"></h1>
+        <div class="recipe-meta">
+            <div class="recipe-category">
+                <span>Main Category:</span>
+                <span th:text="${recipe.primaryCategory}"></span>
+            </div>
+            <div class="recipe-tags">
+                <span th:each="tag : ${recipe.tags}" class="tag" th:text="${tag.name}"></span>
+            </div>
+        </div>
     </div>
 
-    <ul id="ingredients-list" class="ingredient-list">
-        <li class="ingredient-item" th:each="ingredient : ${recipe.ingredients}"
-            th:data-amount="${ingredient.amount}"
-            th:data-unit="${ingredient.unit}"
-            th:data-name="${ingredient.name}">
-            <span class="ingredient-text"
-                  th:text="${ingredient.amount} + ' ' + ${ingredient.unit} + ' ' + ${ingredient.name}"></span>
-        </li>
-    </ul>
+    <div class="recipe-image-wrapper">
+        <img th:id="main-recipe-image"
+             th:src="${recipe.mainImage != null ? recipe.mainImage.parseImage() : '/images/cover-image-recipes.png'}"
+             alt="Recipe Image"
+             class="recipe-image"
+             loading="lazy">
+        <div class="image-nav">
+            <button class="nav-button prev-button" id="prev-btn"><i class="fa fa-chevron-left"></i></button>
+            <button class="nav-button next-button" id="next-btn"><i class="fa fa-chevron-right"></i></button>
+        </div>
+    </div>
 
-    <h3 class="instructions-title">Instructions</h3>
-    <ol>
-        <li th:each="step : ${recipe.instructions}" th:text="${step.instruction}"></li>
-    </ol>
+    <div class="recipe-body-content">
+        <div class="recipe-description-container">
+            <p th:text="${recipe.description}"></p>
+        </div>
+
+        <div class="ingredients-and-instructions-container">
+            <div class="recipe-ingredients-container">
+                <div class="ingredients-header">
+                    <h2 class="section-title">Ingredients</h2>
+                    <div class="multiplier-buttons">
+                        <button class="multiplier-btn active" data-multiplier="1">1x</button>
+                        <button class="multiplier-btn" data-multiplier="2">2x</button>
+                        <button class="multiplier-btn" data-multiplier="4">4x</button>
+                    </div>
+                </div>
+                <ul>
+                    <li th:each="ingredient : ${recipe.ingredients}" th:data-base-amount="${ingredient.amount}">
+                        <span th:text="${#numbers.formatDecimal(ingredient.amount, 0, 'POINT', 0, 'POINT') + ' ' + ingredient.unit}"></span>
+                        <span th:text="${ingredient.name}"></span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="recipe-instructions-container">
+                <h2 class="section-title">Instructions</h2>
+                <ol>
+                    <li th:each="step : ${recipe.instructions}">
+                        <span th:text="${step.instruction}"></span>
+                    </li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="recipe-notes-container" th:if="${recipe.notes != null and !recipe.notes.isEmpty()}">
+            <h2 class="section-title">Notes</h2>
+            <div class="notes-content">
+                <p th:text="${recipe.notes}"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="recipe-times">
+        <div class="time-item">
+            <i class="fa fa-hourglass-start"></i>
+            <h3>Prep Time</h3>
+            <span th:text="${recipe.prepTime + ' mins'}"></span>
+        </div>
+        <div class="time-item">
+            <i class="fa fa-fire"></i>
+            <h3>Cook Time</h3>
+            <span th:text="${recipe.cookTime + ' mins'}"></span>
+        </div>
+        <div class="time-item">
+            <i class="fa fa-clock"></i>
+            <h3>Total Time</h3>
+            <span th:text="${recipe.prepTime + recipe.cookTime} + ' mins'"></span>
+        </div>
+        <div class="time-item">
+            <i class="fa fa-utensils"></i>
+            <h3>Servings</h3>
+            <span th:text="${recipe.servings}"></span>
+        </div>
+    </div>
+
+    <div class="recipe-edit-wrapper" th:if="${isAuthor}">
+        <a th:href="@{'/recipes/edit/' + ${recipe.id}}" class="edit-recipe-btn">
+            <i class="fa fa-edit"></i> Edit Recipe
+        </a>
+    </div>
+
 </div>
 
 <script>
-    function scaleIngredients(multiplier) {
-        const items = document.querySelectorAll("#ingredients-list li");
-        items.forEach(item => {
-            const amount = parseFloat(item.dataset.amount);
-            const unit = item.dataset.unit;
-            const name = item.dataset.name;
-            const newAmount = (amount * multiplier).toFixed(2);
-            item.querySelector("span").innerText = `${newAmount} ${unit} ${name}`;
+    document.addEventListener('DOMContentLoaded', () => {
+        const ingredientsList = document.querySelectorAll('.recipe-ingredients-container ul li');
+        const multiplierButtons = document.querySelectorAll('.multiplier-btn');
+        const updateIngredients = (multiplier) => {
+            ingredientsList.forEach(item => {
+                const baseAmount = parseFloat(item.dataset.baseAmount);
+                if (!isNaN(baseAmount)) {
+                    const newAmount = (baseAmount * multiplier);
+                    const formattedAmount = (newAmount % 1 === 0) ? newAmount.toFixed(0) : newAmount.toFixed(1);
+                    const amountSpan = item.querySelector('span:first-child');
+                    if (amountSpan) {
+                        const unit = amountSpan.textContent.split(' ')[1];
+                        amountSpan.textContent = formattedAmount + ' ' + unit;
+                    }
+                }
+            });
+        };
+        multiplierButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const multiplier = parseInt(button.dataset.multiplier, 10);
+                multiplierButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                updateIngredients(multiplier);
+            });
         });
-    }
+    });
 </script>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    document.addEventListener('DOMContentLoaded', () => {
+        const imageNav = document.querySelector('.image-nav');
+        const mainImageElem = document.getElementById('main-recipe-image');
+
+        // Use Thymeleaf to get the image URLs
+        const mainImageSrc = /*[[${recipe.mainImage != null ? recipe.mainImage.parseImage() : null}]]*/;
+        const otherImageUrls = /*[[${#lists.isEmpty(recipe.images) ? new java.util.ArrayList() : recipe.images.![parseImage()]}]]*/;
+
+        // **FIX:** Build a de-duplicated list of image URLs to prevent the cycling bug.
+        let imageUrls = [];
+        if (mainImageSrc) {
+            // Use a Set to automatically handle duplicates.
+            const uniqueOtherUrls = new Set(otherImageUrls);
+            // Ensure the main image isn't also in the set of "other" images.
+            uniqueOtherUrls.delete(mainImageSrc);
+            // The final array starts with the main image, followed by the unique others.
+            imageUrls = [mainImageSrc, ...uniqueOtherUrls];
+        } else {
+            // If there's no main image, just use the unique "other" images.
+            imageUrls = [...new Set(otherImageUrls)];
+        }
+
+        // **FIX:** If there's 1 or fewer images, hide the navigation container.
+        if (imageUrls.length <= 1) {
+            if (imageNav) {
+                imageNav.style.display = 'none';
+            }
+        } else {
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            let currentIndex = 0;
+
+            const showImage = (index) => {
+                mainImageElem.style.opacity = '0';
+                setTimeout(() => {
+                    mainImageElem.src = imageUrls[index];
+                    mainImageElem.style.opacity = '1';
+                }, 300);
+            };
+
+            nextBtn.addEventListener('click', () => {
+                currentIndex = (currentIndex + 1) % imageUrls.length;
+                showImage(currentIndex);
+            });
+
+            prevBtn.addEventListener('click', () => {
+                currentIndex = (currentIndex - 1 + imageUrls.length) % imageUrls.length;
+                showImage(currentIndex);
+            });
+        }
+    });
+    /*]]>*/
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const toast = document.querySelector('.toast');
+        if (toast) {
+            // Automatically hide after 4 seconds
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 4000);
+        }
+    });
+</script>
+
 </body>
 </html>

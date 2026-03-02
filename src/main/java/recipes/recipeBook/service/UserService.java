@@ -5,6 +5,6 @@ import recipes.recipeBook.entity.User;
 
 public interface UserService {
     User createUser(UserDTO userDTO);
-
     User getUserByUsername(String username);
+    long countUsers();
 }
