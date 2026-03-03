@@ -7,10 +7,7 @@ import org.springframework.stereotype.Service;
 import recipes.recipeBook.dto.ImageDTO;
 import recipes.recipeBook.dto.RecipeDTO;
 import recipes.recipeBook.dto.mapper.RecipeMapper;
-import recipes.recipeBook.entity.Image;
-import recipes.recipeBook.entity.Recipe;
-import recipes.recipeBook.entity.RecipeCategory;
-import recipes.recipeBook.entity.User;
+import recipes.recipeBook.entity.*;
 import recipes.recipeBook.exception.DuplicateRecipeException;
 import recipes.recipeBook.exception.NotFoundException;
 import recipes.recipeBook.repository.RecipeRepository;
@@ -99,7 +96,9 @@ public class RecipeServiceImpl implements RecipeService {
         Recipe existingRecipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(String.format("Recipe with id %d not found", id)));
 
-        if (!existingRecipe.getAuthor().getId().equals(user.getId())) {
+        boolean isAdmin = user.getRole() == Role.ADMIN;
+
+        if (!existingRecipe.getAuthor().getId().equals(user.getId()) && !isAdmin) {
             throw new IllegalArgumentException("User not authorized to update this recipe");
         }
 

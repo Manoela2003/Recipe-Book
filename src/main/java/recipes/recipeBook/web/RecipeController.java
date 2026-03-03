@@ -52,10 +52,17 @@ public class RecipeController {
         model.addAttribute("recipe", recipe);
 
         boolean isAuthor = false;
-        if (userDetails != null && recipe.getAuthor() != null) {
-            isAuthor = recipe.getAuthor().getId().equals(userDetails.getUser().getId());
+        boolean isAdmin = false;
+
+        if (userDetails != null) {
+            if (recipe.getAuthor() != null) {
+                isAuthor = recipe.getAuthor().getId().equals(userDetails.getUser().getId());
+            }
+            isAdmin = userDetails.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         }
-        model.addAttribute("isAuthor", isAuthor);
+
+        model.addAttribute("isAuthor", isAuthor || isAdmin);
 
         String referer = request.getHeader("Referer");
         String backUrl = "/recipes";

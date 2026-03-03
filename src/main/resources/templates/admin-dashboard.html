@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <th:block th:replace="~{fragments/head :: head('Admin Dashboard | Recipe Book')}" />
+  <link rel="stylesheet" th:href="@{/css/home.css}">
+  <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<div class="admin-container">
+  <div class="admin-header">
+    <h1>Admin Control Panel</h1>
+    <p>Manage your application data and system settings.</p>
+  </div>
+
+  <div th:if="${successMessage}" class="alert success-alert admin-alert" style="background-color: #d4edda; color: #155724; padding: 15px; border-radius: 5px; margin-bottom: 30px; text-align: center;">
+    <span th:text="${successMessage}"></span>
+  </div>
+
+  <div th:if="${errorMessage}" class="alert error-alert admin-alert" style="background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin-bottom: 30px; text-align: center;">
+    <i class="fa fa-exclamation-triangle"></i> <span th:text="${errorMessage}"></span>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <i class="fa fa-book-open"></i>
+      <p class="stat-number" th:text="${totalRecipes}">0</p>
+      <p class="stat-label">Total Recipes</p>
+    </div>
+    <div class="stat-card">
+      <i class="fa fa-users"></i>
+      <p class="stat-number" th:text="${totalUsers}">0</p>
+      <p class="stat-label">Registered Users</p>
+    </div>
+  </div>
+
+  <div class="actions-section">
+    <h2>Database Management</h2>
+
+    <div class="action-card spacing-bottom">
+      <div class="action-info">
+        <h3>Export Database Backup (Download)</h3>
+        <p>Download a complete JSON file containing all recipes directly to your computer.</p>
+      </div>
+      <form th:action="@{/admin/backup/download}" method="post">
+        <button type="submit" class="btn-download">
+          <i class="fa fa-download"></i> Download JSON
+        </button>
+      </form>
+    </div>
+
+    <div class="action-card spacing-bottom">
+      <div class="action-info">
+        <h3>Trigger Server Backup</h3>
+        <p>Force the system to generate and save a backup JSON file on the server's local filesystem immediately.</p>
+      </div>
+      <form th:action="@{/admin/backup/server}" method="post">
+        <button type="submit" class="btn-download btn-server">
+          <i class="fa fa-server"></i> Save to Server
+        </button>
+      </form>
+    </div>
+
+    <div class="action-card">
+      <div class="action-info">
+        <h3>Restore Database</h3>
+        <p>Upload a JSON backup file to restore users and recipes. Existing users will be preserved.</p>
+      </div>
+      <form th:action="@{/admin/backup/restore}" method="post" enctype="multipart/form-data" style="display: flex; gap: 10px; align-items: center;">
+        <input type="file" name="file" accept=".json" required style="font-size: 0.9rem;">
+        <button type="submit" class="btn-download" style="background-color: #28a745;">
+          <i class="fa fa-upload"></i> Restore
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

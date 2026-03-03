@@ -12,6 +12,8 @@ import java.util.List;
 
 @Data
 public class RecipeDTO {
+    private Long id;
+
     @NotBlank(message = "Title of the recipe cannot be empty")
     @Size(min = 3, max = 100, message = "Title must be between 3 and 100 characters")
     private String title;
@@ -19,6 +21,8 @@ public class RecipeDTO {
     @NotBlank(message = "Description of the recipe cannot be empty")
     @Size(min = 10, message = "Description must be at least 10 characters")
     private String description;
+
+    private String authorUsername;
 
     @NotNull(message = "Primary category for the recipe must be chosen")
     private RecipeCategory primaryCategory;

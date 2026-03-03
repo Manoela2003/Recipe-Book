@@ -65,9 +65,14 @@ public class RecipeMapper {
         if (recipe == null) return null;
 
         RecipeDTO dto = new RecipeDTO();
+        dto.setId(recipe.getId());
         dto.setTitle(recipe.getTitle());
         dto.setDescription(recipe.getDescription());
         dto.setPrimaryCategory(recipe.getPrimaryCategory());
+
+        if (recipe.getAuthor() != null) {
+            dto.setAuthorUsername(recipe.getAuthor().getUsername());
+        }
 
         if (recipe.getTags() != null) {
             List<String> tagNames = recipe.getTags().stream()
