@@ -51,7 +51,7 @@
       </form>
     </div>
 
-    <div class="action-card">
+    <div class="action-card spacing-bottom">
       <div class="action-info">
         <h3>Trigger Server Backup</h3>
         <p>Force the system to generate and save a backup JSON file on the server's local filesystem immediately.</p>
@@ -59,6 +59,19 @@
       <form th:action="@{/admin/backup/server}" method="post">
         <button type="submit" class="btn-download btn-server">
           <i class="fa fa-server"></i> Save to Server
+        </button>
+      </form>
+    </div>
+
+    <div class="action-card">
+      <div class="action-info">
+        <h3>Restore Database</h3>
+        <p>Upload a JSON backup file to restore users and recipes. Existing users will be preserved.</p>
+      </div>
+      <form th:action="@{/admin/backup/restore}" method="post" enctype="multipart/form-data" style="display: flex; gap: 10px; align-items: center;">
+        <input type="file" name="file" accept=".json" required style="font-size: 0.9rem;">
+        <button type="submit" class="btn-download" style="background-color: #28a745;">
+          <i class="fa fa-upload"></i> Restore
         </button>
       </form>
     </div>

@@ -10,6 +10,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import recipes.recipeBook.service.BackupService;
 import recipes.recipeBook.service.RecipeService;
@@ -65,5 +67,22 @@ public class AdminController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    @PostMapping("/backup/restore")
+    public String restoreBackup(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes) {
+        if (file.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Please select a file to upload.");
+            return "redirect:/admin";
+        }
+
+        try {
+            backupService.restoreDatabase(file);
+            redirectAttributes.addFlashAttribute("successMessage", "Database successfully restored from backup.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to restore database: " + e.getMessage());
+        }
+
+        return "redirect:/admin";
     }
 }
