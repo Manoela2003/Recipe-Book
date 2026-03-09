@@ -383,10 +383,371 @@ body {
     font-size: 1.1rem;
 }
 
-.recipe-edit-wrapper {
+.recipe-action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-download,
+.edit-recipe-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 180px;
+    box-sizing: border-box;
+    margin: 0;
+}
+
+.btn-download {
+    background-color: var(--secondary-color);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.btn-download:hover {
+    background-color: var(--hover-color);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.edit-recipe-btn {
+    background-color: var(--primary-color);
+    box-shadow: 0 4px 10px rgba(209, 118, 118, 0.3);
+}
+
+.edit-recipe-btn:hover {
+    background-color: var(--hover-color);
+    box-shadow: 0 6px 14px rgba(181, 100, 100, 0.4);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.btn-download:active,
+.edit-recipe-btn:active {
+    transform: scale(0.97);
+}
+
+.btn-download i {
+    font-size: 1.1rem;
+}
+
+.reviews-section {
+    margin-top: 2rem;
+}
+
+.reviews-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.average-rating {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.review-count {
+    color: #777;
+    font-size: 0.9rem;
+    font-weight: normal;
+}
+
+.add-review-container {
+    background-color: var(--bg-secondary, #f9f9f9);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+}
+
+.add-review-container h3 {
+    margin-top: 0;
+    color: var(--primary-color);
+}
+
+.star-rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.star-rating-input input {
+    display: none;
+}
+
+.star-rating-input label {
+    font-size: 1.5rem;
+    color: #ccc;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.star-rating-input input:checked ~ label,
+.star-rating-input label:hover,
+.star-rating-input label:hover ~ label {
+    color: #f39c12;
+}
+
+.add-review-container textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    resize: vertical;
+    font-family: inherit;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+}
+
+.submit-review-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.submit-review-btn:hover {
+    background-color: var(--hover-color);
+}
+
+.review-card {
+    border-bottom: 1px solid #eee;
+    padding: 20px 0;
+}
+
+.review-card:last-child {
+    border-bottom: none;
+}
+
+.review-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.review-author {
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.review-date {
+    color: #888;
+    font-size: 0.85rem;
+}
+
+.review-stars {
+    margin-bottom: 10px;
+}
+
+.review-stars .fa-star.filled {
+    color: #f39c12;
+}
+
+.review-stars .fa-star.empty {
+    color: #e0e0e0;
+}
+
+.review-text {
+    margin: 0;
+    color: #444;
+    line-height: 1.5;
+}
+
+.login-prompt {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.login-prompt a {
+    color: #856404;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.reviews-divider {
+    margin: 40px 0;
+    border: 0;
+    border-top: 1px solid var(--secondary-color);
+}
+
+.average-star {
+    color: #f39c12;
+}
+
+.error-alert {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+
+.review-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 5px;
+}
+
+.review-author-date {
+    display: flex;
+    flex-direction: column;
+}
+
+.review-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.review-actions form {
+    margin: 0;
+}
+
+.review-action-btn {
+    background: none;
+    border: none;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.review-action-btn.edit-btn {
+    color: #3498db;
+    background-color: #ebf5fb;
+}
+
+.review-action-btn.edit-btn:hover {
+    background-color: #d6eaf8;
+}
+
+.review-action-btn.delete-btn {
+    color: #e74c3c;
+    background-color: #fdedec;
+}
+
+.review-action-btn.delete-btn:hover {
+    background-color: #fadbd8;
+}
+
+/* Custom Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
     display: flex;
     justify-content: center;
-    margin-bottom: 1rem;
+    align-items: center;
+    backdrop-filter: blur(3px);
+}
+
+.modal-content {
+    background-color: var(--card-background);
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-header {
+    margin-bottom: 15px;
+}
+
+.warning-icon {
+    font-size: 3rem;
+    color: #e74c3c;
+    margin-bottom: 10px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 1.5rem;
+}
+
+.modal-content p {
+    color: var(--text-color);
+    margin-bottom: 25px;
+    line-height: 1.5;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.btn-cancel {
+    background-color: #f1f1f1;
+    color: #333;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-cancel:hover {
+    background-color: #e0e0e0;
+}
+
+.btn-confirm-delete {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-confirm-delete:hover {
+    background-color: #c0392b;
 }
 
 .alert {
@@ -414,4 +775,97 @@ body {
     color: inherit;
     padding: 0;
     margin-left: 10px;
+}
+
+.toast-container {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    z-index: 9999;
+}
+
+.toast-notification {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 250px;
+    max-width: 350px;
+    padding: 16px 20px;
+    border-radius: 8px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    color: white;
+    font-weight: 500;
+    font-size: 1rem;
+    animation: slideInRight 0.5s forwards;
+}
+
+.toast-success {
+    background-color: #2ecc71;
+    border-left: 6px solid #27ae60;
+}
+
+.toast-error {
+    background-color: #e74c3c;
+    border-left: 6px solid #c0392b;
+}
+
+.toast-notification i {
+    font-size: 1.5rem;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    margin-left: auto;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.toast-close:hover {
+    opacity: 1;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(120%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(120%);
+        opacity: 0;
+    }
+}
+
+.recipe-author {
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.recipe-author i {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+}
+
+.recipe-author strong {
+    color: var(--primary-color);
+    font-weight: 700;
 }

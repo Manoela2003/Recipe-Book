@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/head :: head('Edit Review | Recipe Book')}"/>
+    <link rel="stylesheet" th:href="@{/css/home.css}">
+    <link rel="stylesheet" th:href="@{/css/recipe-details.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<div class="recipe-container">
+    <a th:href="@{'/recipes/' + ${recipeId}}" class="back-link">
+        <i class="fa fa-arrow-left"></i> <span>Back to Recipe</span>
+    </a>
+
+    <div class="add-review-container">
+        <h2 class="section-title">Edit Your Review</h2>
+        <form th:action="@{'/recipes/' + ${recipeId} + '/reviews/' + ${review.id} + '/edit'}" th:object="${review}" method="post">
+
+            <div class="star-rating-input">
+                <input type="radio" id="star5" name="rating" value="5" th:field="*{rating}" />
+                <label for="star5"><i class="fa fa-star"></i></label>
+                <input type="radio" id="star4" name="rating" value="4" th:field="*{rating}" />
+                <label for="star4"><i class="fa fa-star"></i></label>
+                <input type="radio" id="star3" name="rating" value="3" th:field="*{rating}" />
+                <label for="star3"><i class="fa fa-star"></i></label>
+                <input type="radio" id="star2" name="rating" value="2" th:field="*{rating}" />
+                <label for="star2"><i class="fa fa-star"></i></label>
+                <input type="radio" id="star1" name="rating" value="1" th:field="*{rating}" />
+                <label for="star1"><i class="fa fa-star"></i></label>
+            </div>
+            <div th:if="${#fields.hasErrors('rating')}" class="error-message" th:errors="*{rating}"></div>
+
+            <textarea th:field="*{comment}" rows="5" placeholder="Update your thoughts on this recipe..."></textarea>
+
+            <button type="submit" class="submit-review-btn">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>

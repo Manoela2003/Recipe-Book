@@ -2,6 +2,7 @@ package recipes.recipeBook.dto.mapper;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import recipes.recipeBook.dto.UserDTO;
+import recipes.recipeBook.entity.Role;
 import recipes.recipeBook.entity.User;
 
 public class UserDTOToUserMapper {
@@ -14,6 +15,7 @@ public class UserDTOToUserMapper {
         user.setEmail(userDTO.getEmail());
         user.setFirstName(userDTO.getFirstName());
         user.setLastName(userDTO.getLastName());
+        user.setRole(Role.USER);
 
         return user;
     }

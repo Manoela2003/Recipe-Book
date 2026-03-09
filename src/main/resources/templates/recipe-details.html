@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <th:block th:replace="~{fragments/head :: head('Recipe Details | Recipe Book')}"/>
     <link rel="stylesheet" th:href="@{/css/recipe-details.css}">
@@ -10,16 +10,14 @@
 
 <div class="recipe-container">
     <a th:href="@{${backUrl}}" class="back-link">
-        <i class="fa fa-arrow-left"></i> <span th:text="${backText}">All Recipes</span>
+        <i class="fa fa-arrow-left"></i> <span th:text="${backText}"></span>
     </a>
 
     <div class="recipe-header">
-        <div th:if="${successMessage}" class="alert success-alert">
-            <span th:text="${successMessage}"></span>
-            <button class="close-btn" onclick="this.parentElement.style.display='none';">&times;</button>
-        </div>
-
         <h1 class="recipe-title" th:text="${recipe.title}"></h1>
+        <div class="recipe-author" th:if="${recipe.author != null}">
+            <i class="fa fa-user-edit"></i> Recipe by <strong th:text="${recipe.author.username}"></strong>
+        </div>
         <div class="recipe-meta">
             <div class="recipe-category">
                 <span>Main Category:</span>
@@ -107,12 +105,86 @@
         </div>
     </div>
 
-    <div class="recipe-edit-wrapper" th:if="${isAuthor}">
-        <a th:href="@{'/recipes/edit/' + ${recipe.id}}" class="edit-recipe-btn">
+    <div class="recipe-action-buttons">
+        <a th:href="@{'/recipes/' + ${recipe.id} + '/export/pdf'}" class="btn-download">
+            <i class="fa fa-file-pdf"></i> Download PDF
+        </a>
+
+        <a th:if="${isAuthor}" th:href="@{'/recipes/edit/' + ${recipe.id}}" class="edit-recipe-btn">
             <i class="fa fa-edit"></i> Edit Recipe
         </a>
     </div>
 
+    <hr class="reviews-divider">
+
+    <div class="reviews-section" id="reviews">
+        <div class="reviews-header">
+            <h2 class="section-title">Reviews</h2>
+            <div class="average-rating" th:if="${reviews.size() > 0}">
+                <span class="rating-number" th:text="${#numbers.formatDecimal(averageRating, 1, 1)}">0.0</span>
+                <i class="fa fa-star average-star"></i>
+                <span class="review-count" th:text="'(' + ${reviews.size()} + ' reviews)'"></span>
+            </div>
+        </div>
+
+        <div class="add-review-container" sec:authorize="isAuthenticated()">
+            <h3>Leave a Review</h3>
+            <form th:action="@{'/recipes/' + ${recipe.id} + '/reviews'}" th:object="${newReview}" method="post">
+
+                <div class="star-rating-input">
+                    <input type="radio" id="star5" name="rating" value="5" th:field="*{rating}" />
+                    <label for="star5" title="5 stars"><i class="fa fa-star"></i></label>
+                    <input type="radio" id="star4" name="rating" value="4" th:field="*{rating}" />
+                    <label for="star4" title="4 stars"><i class="fa fa-star"></i></label>
+                    <input type="radio" id="star3" name="rating" value="3" th:field="*{rating}" />
+                    <label for="star3" title="3 stars"><i class="fa fa-star"></i></label>
+                    <input type="radio" id="star2" name="rating" value="2" th:field="*{rating}" />
+                    <label for="star2" title="2 stars"><i class="fa fa-star"></i></label>
+                    <input type="radio" id="star1" name="rating" value="1" th:field="*{rating}" />
+                    <label for="star1" title="1 star"><i class="fa fa-star"></i></label>
+                </div>
+
+                <textarea th:field="*{comment}" rows="3" placeholder="What did you think about this recipe? (Optional)"></textarea>
+
+                <button type="submit" class="submit-review-btn">Post Review</button>
+            </form>
+        </div>
+
+        <div class="login-prompt" sec:authorize="isAnonymous()">
+            <p>Please <a th:href="@{/login}">log in</a> to leave a review.</p>
+        </div>
+
+        <div class="reviews-list">
+            <p th:if="${reviews.size() == 0}" class="no-reviews">No reviews yet. Be the first to try this recipe!</p>
+
+            <div class="review-card" th:each="review : ${reviews}">
+                <div class="review-meta">
+                    <div class="review-author-date">
+                        <span class="review-author" th:text="${review.username}"></span>
+                        <span class="review-date" th:text="${#temporals.format(review.createdAt, 'dd MMM yyyy')}"></span>
+                    </div>
+
+                    <div class="review-actions" th:if="${#authorization.expression('isAuthenticated()') and (#authentication.principal.user.id == review.userId or #authorization.expression('hasRole(''ADMIN'')'))}">
+                        <a th:href="@{'/recipes/' + ${recipe.id} + '/reviews/' + ${review.id} + '/edit'}" class="review-action-btn edit-btn">
+                            <i class="fa fa-edit"></i> Edit
+                        </a>
+
+                        <button type="button" class="review-action-btn delete-btn" th:attr="onclick=|openDeleteModal('delete-form-${review.id}')|">
+                            <i class="fa fa-trash"></i> Delete
+                        </button>
+
+                        <form th:id="'delete-form-' + ${review.id}" th:action="@{'/recipes/' + ${recipe.id} + '/reviews/' + ${review.id} + '/delete'}" method="post" style="display: none;">
+                        </form>
+                    </div>
+                </div>
+                <div class="review-stars">
+                    <i class="fa fa-star" th:each="i : ${#numbers.sequence(1, 5)}"
+                       th:classappend="${i <= review.rating ? 'filled' : 'empty'}"></i>
+                </div>
+                <p class="review-text" th:if="${review.comment != null and !review.comment.isEmpty()}" th:text="${review.comment}"></p>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -142,33 +214,45 @@
             });
         });
     });
+
+    let formToSubmitId = null;
+
+    function openDeleteModal(formId) {
+        formToSubmitId = formId;
+        document.getElementById('deleteConfirmModal').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+        formToSubmitId = null;
+        document.getElementById('deleteConfirmModal').style.display = 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+            if (formToSubmitId) {
+                document.getElementById(formToSubmitId).submit();
+            }
+        });
+    });
 </script>
 
 <script th:inline="javascript">
-    /*<![CDATA[*/
     document.addEventListener('DOMContentLoaded', () => {
         const imageNav = document.querySelector('.image-nav');
         const mainImageElem = document.getElementById('main-recipe-image');
 
-        // Use Thymeleaf to get the image URLs
         const mainImageSrc = /*[[${recipe.mainImage != null ? recipe.mainImage.parseImage() : null}]]*/;
         const otherImageUrls = /*[[${#lists.isEmpty(recipe.images) ? new java.util.ArrayList() : recipe.images.![parseImage()]}]]*/;
 
-        // **FIX:** Build a de-duplicated list of image URLs to prevent the cycling bug.
         let imageUrls = [];
         if (mainImageSrc) {
-            // Use a Set to automatically handle duplicates.
             const uniqueOtherUrls = new Set(otherImageUrls);
-            // Ensure the main image isn't also in the set of "other" images.
             uniqueOtherUrls.delete(mainImageSrc);
-            // The final array starts with the main image, followed by the unique others.
             imageUrls = [mainImageSrc, ...uniqueOtherUrls];
         } else {
-            // If there's no main image, just use the unique "other" images.
             imageUrls = [...new Set(otherImageUrls)];
         }
 
-        // **FIX:** If there's 1 or fewer images, hide the navigation container.
         if (imageUrls.length <= 1) {
             if (imageNav) {
                 imageNav.style.display = 'none';
@@ -197,18 +281,48 @@
             });
         }
     });
-    /*]]>*/
+
+    function closeToast() {
+        const toast = document.querySelector('.toast-notification');
+        if (toast) {
+            toast.style.animation = 'slideOutRight 0.5s forwards';
+            setTimeout(() => {
+                toast.parentElement.remove();
+            }, 500);
+        }
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
-        const toast = document.querySelector('.toast');
+        const toast = document.querySelector('.toast-notification');
         if (toast) {
-            // Automatically hide after 4 seconds
             setTimeout(() => {
-                toast.style.display = 'none';
+                closeToast();
             }, 4000);
         }
     });
 </script>
+
+<div id="deleteConfirmModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <i class="fa fa-exclamation-triangle warning-icon"></i>
+            <h3>Delete Review</h3>
+        </div>
+        <p>Are you sure you want to delete this review? This action cannot be undone.</p>
+        <div class="modal-actions">
+            <button type="button" class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+            <button type="button" class="btn-confirm-delete" id="confirmDeleteBtn">Yes, Delete</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container" th:if="${successMessage != null or errorMessage != null}">
+    <div class="toast-notification" th:classappend="${successMessage != null} ? 'toast-success' : 'toast-error'">
+        <i class="fa" th:classappend="${successMessage != null} ? 'fa-check-circle' : 'fa-exclamation-circle'"></i>
+        <span th:text="${successMessage != null} ? ${successMessage} : ${errorMessage}"></span>
+        <button class="toast-close" onclick="closeToast()">&times;</button>
+    </div>
+</div>
 
 </body>
 </html>

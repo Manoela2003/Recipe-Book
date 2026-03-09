@@ -50,6 +50,9 @@ public class Recipe {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
+
     @Transient
     private String imageBase64;
     private Date createdOn;
