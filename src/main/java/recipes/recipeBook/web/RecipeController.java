@@ -1,6 +1,7 @@
 package recipes.recipeBook.web;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -13,10 +14,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import recipes.recipeBook.dto.ImageDTO;
-import recipes.recipeBook.dto.IngredientDTO;
-import recipes.recipeBook.dto.RecipeDTO;
-import recipes.recipeBook.dto.TempImageDTO;
+import recipes.recipeBook.dto.*;
 import recipes.recipeBook.dto.mapper.RecipeMapper;
 import recipes.recipeBook.entity.CustomUserDetails;
 import recipes.recipeBook.entity.Image;
@@ -24,32 +22,36 @@ import recipes.recipeBook.entity.Recipe;
 import recipes.recipeBook.entity.RecipeCategory;
 import recipes.recipeBook.exception.DuplicateRecipeException;
 import recipes.recipeBook.exception.NotFoundException;
+import recipes.recipeBook.service.PdfExportService;
 import recipes.recipeBook.service.RecipeService;
+import recipes.recipeBook.service.ReviewService;
 import recipes.recipeBook.service.TempImageService;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
 
 @Controller
 @RequestMapping("/recipes")
 public class RecipeController {
     private final RecipeService recipeService;
     private final TempImageService imageService;
+    private final PdfExportService pdfExportService;
+    private final ReviewService reviewService;
 
     @Autowired
-    public RecipeController(RecipeService recipeService, TempImageService imageService) {
+    public RecipeController(RecipeService recipeService, TempImageService imageService, PdfExportService pdfExportService, ReviewService reviewService) {
         this.recipeService = recipeService;
         this.imageService = imageService;
+        this.pdfExportService = pdfExportService;
+        this.reviewService = reviewService;
     }
 
     @GetMapping("/{id}")
-    public String viewRecipe(@PathVariable("id") Long id, Model model,
-                             @AuthenticationPrincipal CustomUserDetails userDetails,
-                             HttpServletRequest request) {
+    public String viewRecipe(@PathVariable("id") Long id, Model model, @AuthenticationPrincipal CustomUserDetails userDetails, HttpServletRequest request) {
         Recipe recipe = recipeService.findRecipeById(id);
-        model.addAttribute("recipe", recipe);
 
         boolean isAuthor = false;
         boolean isAdmin = false;
@@ -62,26 +64,30 @@ public class RecipeController {
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         }
 
-        model.addAttribute("isAuthor", isAuthor || isAdmin);
-
         String referer = request.getHeader("Referer");
         String backUrl = "/recipes";
         String backText = "All Recipes";
 
-        if (referer != null && !referer.contains("/edit/") && !referer.contains("/add")) {
-            backUrl = referer;
-
-            if (referer.contains("/my-recipes")) {
+        if (referer != null) {
+            if (referer.contains("/recipes/my-recipes")) {
+                backUrl = "/recipes/my-recipes";
                 backText = "My Recipes";
             } else if (referer.contains("/home") || referer.endsWith("/")) {
+                backUrl = "/home";
                 backText = "Home";
-            } else if (referer.contains("query=") || referer.contains("category=")) {
-                backText = "Search Results";
             }
         }
 
+        model.addAttribute("recipe", recipe);
+        model.addAttribute("isAuthor", isAuthor || isAdmin);
+        model.addAttribute("reviews", reviewService.getReviewsForRecipe(id));
+        model.addAttribute("averageRating", reviewService.getAverageRating(id));
         model.addAttribute("backUrl", backUrl);
         model.addAttribute("backText", backText);
+
+        if (!model.containsAttribute("newReview")) {
+            model.addAttribute("newReview", new ReviewDTO());
+        }
 
         return "recipe-details";
     }
@@ -129,7 +135,8 @@ public class RecipeController {
                                @RequestParam(value = "tempImageIds", required = false) List<String> tempImageIds,
                                @RequestParam(value = "mainImageIndex", required = false) String mainImageIndexParam,
                                Model model,
-                               @AuthenticationPrincipal CustomUserDetails userDetails) {
+                               @AuthenticationPrincipal CustomUserDetails userDetails,
+                               RedirectAttributes redirectAttributes) {
 
         List<String> filteredSteps = recipeDTO.getInstructions() == null ? new ArrayList<>() :
                 recipeDTO.getInstructions().stream()
@@ -176,7 +183,8 @@ public class RecipeController {
                                 .findFirst()
                                 .ifPresent(img -> imageDTOs.add(new ImageDTO(img.getImage(), img.getMimeType())));
                     }
-                } catch (Exception e) {}
+                } catch (Exception e) {
+                }
             }
         }
 
@@ -184,7 +192,8 @@ public class RecipeController {
             if (!file.isEmpty()) {
                 try {
                     imageDTOs.add(new ImageDTO(file.getBytes(), file.getContentType()));
-                } catch (Exception e) {}
+                } catch (Exception e) {
+                }
             }
         }
 
@@ -193,6 +202,9 @@ public class RecipeController {
         }
 
         recipeService.updateRecipe(id, recipeDTO, imageDTOs, userDetails.getUser());
+
+        redirectAttributes.addFlashAttribute("successMessage", "Recipe updated successfully!");
+
         return "redirect:/recipes/" + id;
     }
 
@@ -356,6 +368,96 @@ public class RecipeController {
         model.addAttribute("requestURI", request.getRequestURI());
 
         return "recipes-list";
+    }
+
+    @GetMapping("/{id}/export/pdf")
+    public void exportToPdf(@PathVariable("id") Long id, HttpServletResponse response) throws IOException {
+        Recipe recipe = recipeService.findRecipeById(id);
+
+        response.setContentType("application/pdf");
+        String encodedTitle = java.net.URLEncoder.encode(recipe.getTitle(), StandardCharsets.UTF_8).replaceAll("\\+", "%20");
+        String headerKey = "Content-Disposition";
+        String headerValue = "attachment; filename*=UTF-8''" + encodedTitle + ".pdf";
+        response.setHeader(headerKey, headerValue);
+
+        pdfExportService.exportRecipeToPdf(recipe, response);
+    }
+
+    @PostMapping("/{id}/reviews")
+    public String addReview(@PathVariable("id") Long id,
+                            @Valid @ModelAttribute("newReview") ReviewDTO reviewDTO,
+                            BindingResult bindingResult,
+                            @AuthenticationPrincipal CustomUserDetails userDetails,
+                            RedirectAttributes redirectAttributes) {
+
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.newReview", bindingResult);
+            redirectAttributes.addFlashAttribute("newReview", reviewDTO);
+            redirectAttributes.addFlashAttribute("errorMessage", "Please select a star rating to submit your review.");
+            return "redirect:/recipes/" + id + "#reviews";
+        }
+
+        reviewService.addReview(id, reviewDTO, userDetails.getUser());
+        redirectAttributes.addFlashAttribute("successMessage", "Review added successfully!");
+
+        return "redirect:/recipes/" + id + "#reviews";
+    }
+
+    @PostMapping("/{recipeId}/reviews/{reviewId}/delete")
+    public String deleteReview(@PathVariable("recipeId") Long recipeId,
+                               @PathVariable("reviewId") Long reviewId,
+                               @AuthenticationPrincipal CustomUserDetails userDetails,
+                               RedirectAttributes redirectAttributes) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+        try {
+            reviewService.deleteReview(reviewId, userDetails.getUser());
+            redirectAttributes.addFlashAttribute("successMessage", "Review deleted successfully.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/recipes/" + recipeId + "#reviews";
+    }
+
+    @PostMapping("/{recipeId}/reviews/{reviewId}/edit")
+    public String updateReview(@PathVariable("recipeId") Long recipeId,
+                               @PathVariable("reviewId") Long reviewId,
+                               @Valid @ModelAttribute("review") ReviewDTO reviewDTO,
+                               BindingResult bindingResult,
+                               @AuthenticationPrincipal CustomUserDetails userDetails,
+                               RedirectAttributes redirectAttributes) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+        if (bindingResult.hasErrors()) {
+            return "edit-review";
+        }
+        try {
+            reviewService.updateReview(reviewId, reviewDTO, userDetails.getUser());
+            redirectAttributes.addFlashAttribute("successMessage", "Review updated successfully.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/recipes/" + recipeId + "#reviews";
+    }
+
+    @GetMapping("/{recipeId}/reviews/{reviewId}/edit")
+    public String showEditReviewForm(@PathVariable("recipeId") Long recipeId,
+                                     @PathVariable("reviewId") Long reviewId,
+                                     Model model,
+                                     @AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+        ReviewDTO reviewDTO = reviewService.getReviewById(reviewId);
+        model.addAttribute("review", reviewDTO);
+        model.addAttribute("recipeId", recipeId);
+        return "edit-review";
     }
 
     @ExceptionHandler(NotFoundException.class)
