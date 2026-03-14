@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import recipes.recipeBook.dto.UserDTO;
 import recipes.recipeBook.dto.mapper.UserDTOToUserMapper;
+import recipes.recipeBook.entity.Role;
 import recipes.recipeBook.entity.User;
 import recipes.recipeBook.exception.DuplicateEmailException;
 import recipes.recipeBook.exception.DuplicateUsernameException;
@@ -41,6 +42,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public long countUsers() {
-        return userRepository.count();
+        return userRepository.countByRoleNot(Role.ADMIN);
     }
 }

@@ -100,13 +100,10 @@
             <label>Ingredients</label>
             <div id="ingredient-list" class="dynamic-list">
                 <div th:each="ingredient, iterStat : *{ingredients}" class="dynamic-list-item">
-                    <input type="text" th:field="*{ingredients[__${iterStat.index}__].name}"
-                           placeholder="Ingredient"
-                           required>
-                    <input type="number" th:field="*{ingredients[__${iterStat.index}__].amount}" step="1" min="0"
-                           placeholder="Amount" required>
-                    <input type="text" th:field="*{ingredients[__${iterStat.index}__].unit}" placeholder="Unit"
-                           required>
+                    <input type="text" th:field="*{ingredients[__${iterStat.index}__].section}" placeholder="Section (e.g. Filling, Topping) - Optional">
+                    <input type="text" th:field="*{ingredients[__${iterStat.index}__].name}" placeholder="Ingredient" required>
+                    <input type="number" th:field="*{ingredients[__${iterStat.index}__].amount}" step="0.01" min="0" placeholder="Amount" required>
+                    <input type="text" th:field="*{ingredients[__${iterStat.index}__].unit}" placeholder="Unit" required>
                     <button type="button" class="remove-btn" onclick="removeItem(this)" aria-label="Remove item">
                         &times;
                     </button>
@@ -139,6 +136,11 @@
         </div>
 
         <div class="form-group">
+            <label for="videoUrl"><i class="fa fa-video"></i> Video Link (YouTube, TikTok, Instagram, Facebook)</label>
+            <input type="text" id="videoUrl" th:field="*{videoUrl}" placeholder="Paste the video link here...">
+        </div>
+
+        <div class="form-group">
             <label for="prepTime">Preparation Time (minutes)</label>
             <input type="number" id="prepTime" th:field="*{prepTime}" min="0">
             <div th:if="${#fields.hasErrors('prepTime')}" class="error-message" th:errors="*{prepTime}"></div>
@@ -164,11 +166,11 @@
 
         <template id="ingredient-template">
             <div class="dynamic-list-item">
+                <input type="text" name="" placeholder="Section (e.g. Filling, Topping) - Optional">
                 <input type="text" name="" placeholder="Ingredient" required>
                 <input type="number" name="" step="0.01" min="0" placeholder="Amount" required>
                 <input type="text" name="" placeholder="Unit" required>
-                <button type="button" class="remove-btn" onclick="removeItem(this)" aria-label="Remove item">&times;
-                </button>
+                <button type="button" class="remove-btn" onclick="removeItem(this)" aria-label="Remove item">&times;</button>
             </div>
         </template>
     </form>
@@ -181,12 +183,20 @@
         const clone = template.content.cloneNode(true);
 
         const index = list.querySelectorAll('.dynamic-list-item').length;
-
         const inputs = clone.querySelectorAll('input');
-        if (inputs.length >= 3) {
-            inputs[0].name = `ingredients[${index}].name`;
-            inputs[1].name = `ingredients[${index}].amount`;
-            inputs[2].name = `ingredients[${index}].unit`;
+
+        const existingItems = list.querySelectorAll('.dynamic-list-item');
+        if (existingItems.length > 0) {
+            const lastItem = existingItems[existingItems.length - 1];
+            const lastSectionValue = lastItem.querySelectorAll('input')[0].value;
+            inputs[0].value = lastSectionValue;
+        }
+
+        if (inputs.length >= 4) {
+            inputs[0].name = `ingredients[${index}].section`;
+            inputs[1].name = `ingredients[${index}].name`;
+            inputs[2].name = `ingredients[${index}].amount`;
+            inputs[3].name = `ingredients[${index}].unit`;
         }
 
         list.appendChild(clone);
@@ -355,10 +365,11 @@
         const items = document.querySelectorAll('#ingredient-list .dynamic-list-item');
         items.forEach((item, index) => {
             const inputs = item.querySelectorAll('input');
-            if (inputs.length >= 3) {
-                inputs[0].name = `ingredients[${index}].name`;
-                inputs[1].name = `ingredients[${index}].amount`;
-                inputs[2].name = `ingredients[${index}].unit`;
+            if (inputs.length >= 4) {
+                inputs[0].name = `ingredients[${index}].section`;
+                inputs[1].name = `ingredients[${index}].name`;
+                inputs[2].name = `ingredients[${index}].amount`;
+                inputs[3].name = `ingredients[${index}].unit`;
             }
         });
     }

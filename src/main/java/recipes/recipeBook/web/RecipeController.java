@@ -16,21 +16,16 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import recipes.recipeBook.dto.*;
 import recipes.recipeBook.dto.mapper.RecipeMapper;
-import recipes.recipeBook.entity.CustomUserDetails;
-import recipes.recipeBook.entity.Image;
-import recipes.recipeBook.entity.Recipe;
-import recipes.recipeBook.entity.RecipeCategory;
+import recipes.recipeBook.entity.*;
 import recipes.recipeBook.exception.DuplicateRecipeException;
 import recipes.recipeBook.exception.NotFoundException;
-import recipes.recipeBook.service.PdfExportService;
-import recipes.recipeBook.service.RecipeService;
-import recipes.recipeBook.service.ReviewService;
-import recipes.recipeBook.service.TempImageService;
+import recipes.recipeBook.service.*;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Controller
@@ -40,13 +35,15 @@ public class RecipeController {
     private final TempImageService imageService;
     private final PdfExportService pdfExportService;
     private final ReviewService reviewService;
+    private final BookmarkService bookmarkService;
 
     @Autowired
-    public RecipeController(RecipeService recipeService, TempImageService imageService, PdfExportService pdfExportService, ReviewService reviewService) {
+    public RecipeController(RecipeService recipeService, TempImageService imageService, PdfExportService pdfExportService, ReviewService reviewService, BookmarkService bookmarkService) {
         this.recipeService = recipeService;
         this.imageService = imageService;
         this.pdfExportService = pdfExportService;
         this.reviewService = reviewService;
+        this.bookmarkService = bookmarkService;
     }
 
     @GetMapping("/{id}")
@@ -55,6 +52,7 @@ public class RecipeController {
 
         boolean isAuthor = false;
         boolean isAdmin = false;
+        boolean isBookmarked = false;
 
         if (userDetails != null) {
             if (recipe.getAuthor() != null) {
@@ -62,24 +60,48 @@ public class RecipeController {
             }
             isAdmin = userDetails.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+            isBookmarked = bookmarkService.isBookmarked(id, userDetails.getUser());
         }
 
-        String referer = request.getHeader("Referer");
         String backUrl = "/recipes";
         String backText = "All Recipes";
 
-        if (referer != null) {
-            if (referer.contains("/recipes/my-recipes")) {
-                backUrl = "/recipes/my-recipes";
-                backText = "My Recipes";
-            } else if (referer.contains("/home") || referer.endsWith("/")) {
-                backUrl = "/home";
-                backText = "Home";
+        if (model.containsAttribute("preservedBackUrl")) {
+            backUrl = (String) model.getAttribute("preservedBackUrl");
+            backText = (String) model.getAttribute("preservedBackText");
+        } else {
+            String referer = request.getHeader("Referer");
+            if (referer != null) {
+                try {
+                    java.net.URL url = new java.net.URL(referer);
+                    String path = url.getPath();
+                    String query = url.getQuery();
+
+                    String exactUrl = path + (query != null ? "?" + query : "");
+
+                    if (path.contains("/recipes/my-recipes")) {
+                        backUrl = exactUrl;
+                        backText = "My Recipes";
+                    } else if (path.contains("/recipes/favorites")) {
+                        backUrl = exactUrl;
+                        backText = "Bookmarked Recipes";
+                    } else if (path.contains("/home") || path.equals("/")) {
+                        backUrl = "/home";
+                        backText = "Home";
+                    } else if (path.contains("/recipes")) {
+                        backUrl = exactUrl;
+                        backText = "All Recipes";
+                    }
+                } catch (Exception e) {
+
+                }
             }
         }
 
         model.addAttribute("recipe", recipe);
         model.addAttribute("isAuthor", isAuthor || isAdmin);
+        model.addAttribute("isBookmarked", isBookmarked);
         model.addAttribute("reviews", reviewService.getReviewsForRecipe(id));
         model.addAttribute("averageRating", reviewService.getAverageRating(id));
         model.addAttribute("backUrl", backUrl);
@@ -88,6 +110,16 @@ public class RecipeController {
         if (!model.containsAttribute("newReview")) {
             model.addAttribute("newReview", new ReviewDTO());
         }
+
+        Map<String, List<Ingredient>> groupedIngredients = new java.util.LinkedHashMap<>();
+        if (recipe.getIngredients() != null) {
+            for (Ingredient ingredient : recipe.getIngredients()) {
+                String section = (ingredient.getSection() != null && !ingredient.getSection().trim().isEmpty())
+                        ? ingredient.getSection() : "Main";
+                groupedIngredients.computeIfAbsent(section, k -> new java.util.ArrayList<>()).add(ingredient);
+            }
+        }
+        model.addAttribute("groupedIngredients", groupedIngredients);
 
         return "recipe-details";
     }
@@ -104,7 +136,10 @@ public class RecipeController {
             return "redirect:/recipes";
         }
 
-        if (!recipe.getAuthor().getId().equals(userDetails.getUser().getId())) {
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!recipe.getAuthor().getId().equals(userDetails.getUser().getId()) && !isAdmin) {
             redirectAttributes.addFlashAttribute("errorMessage", "You are not authorized to edit this recipe.");
             return "redirect:/recipes/" + id;
         }
@@ -458,6 +493,80 @@ public class RecipeController {
         model.addAttribute("review", reviewDTO);
         model.addAttribute("recipeId", recipeId);
         return "edit-review";
+    }
+
+    @PostMapping("/{id}/bookmark")
+    public String toggleBookmark(@PathVariable("id") Long id,
+                                 @RequestParam(value = "backUrl", required = false) String backUrl,
+                                 @RequestParam(value = "backText", required = false) String backText,
+                                 @AuthenticationPrincipal CustomUserDetails userDetails,
+                                 RedirectAttributes redirectAttributes) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        boolean wasBookmarked = bookmarkService.isBookmarked(id, userDetails.getUser());
+        bookmarkService.toggleBookmark(id, userDetails.getUser());
+
+        if (wasBookmarked) {
+            redirectAttributes.addFlashAttribute("successMessage", "Recipe removed from bookmarks.");
+        } else {
+            redirectAttributes.addFlashAttribute("successMessage", "Recipe saved to bookmarks!");
+        }
+
+        if (backUrl != null && backText != null) {
+            redirectAttributes.addFlashAttribute("preservedBackUrl", backUrl);
+            redirectAttributes.addFlashAttribute("preservedBackText", backText);
+        }
+
+        return "redirect:/recipes/" + id;
+    }
+
+    @GetMapping("/favorites")
+    public String getFavoriteRecipes(
+            @PageableDefault(size = 9) Pageable pageable,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            Model model,
+            HttpServletRequest request) {
+
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        Page<Recipe> recipes = recipeService.findBookmarkedRecipes(userDetails.getUser(), pageable);
+
+        model.addAttribute("recipes", recipes);
+        model.addAttribute("isFavorites", true);
+        model.addAttribute("requestURI", request.getRequestURI());
+
+        return "recipes-list";
+    }
+
+    @PostMapping("/{id}/delete")
+    public String deleteRecipe(@PathVariable("id") Long id,
+                               @AuthenticationPrincipal CustomUserDetails userDetails,
+                               RedirectAttributes redirectAttributes) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        try {
+            Recipe recipe = recipeService.findRecipeById(id);
+            boolean isAdmin = userDetails.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+            if (!recipe.getAuthor().getId().equals(userDetails.getUser().getId()) && !isAdmin) {
+                redirectAttributes.addFlashAttribute("errorMessage", "You are not authorized to delete this recipe.");
+                return "redirect:/recipes/" + id;
+            }
+
+            recipeService.deleteRecipe(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Recipe deleted successfully.");
+            return "redirect:/recipes";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to delete recipe: " + e.getMessage());
+            return "redirect:/recipes/" + id;
+        }
     }
 
     @ExceptionHandler(NotFoundException.class)

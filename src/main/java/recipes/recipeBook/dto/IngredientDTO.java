@@ -14,4 +14,6 @@ public class IngredientDTO {
 
     @NotBlank(message = "Unit is required")
     private String unit;
+
+    private String section;
 }

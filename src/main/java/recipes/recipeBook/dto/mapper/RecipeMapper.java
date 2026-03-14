@@ -47,6 +47,7 @@ public class RecipeMapper {
                     ingredient.setName(ingredientDTO.getName());
                     ingredient.setUnit(ingredientDTO.getUnit());
                     ingredient.setAmount(ingredientDTO.getAmount());
+                    ingredient.setSection(ingredientDTO.getSection());
                     return ingredient;
                 })
                 .collect(Collectors.toCollection(ArrayList::new));
@@ -57,6 +58,7 @@ public class RecipeMapper {
         recipe.setServings(dto.getServings());
         recipe.setNotes(dto.getNotes());
         recipe.setCreatedOn(new Date());
+        recipe.setVideoUrl(dto.getVideoUrl());
 
         return recipe;
     }
@@ -99,6 +101,7 @@ public class RecipeMapper {
                         ingDto.setName(ingredient.getName());
                         ingDto.setAmount(ingredient.getAmount());
                         ingDto.setUnit(ingredient.getUnit());
+                        ingDto.setSection(ingredient.getSection());
                         return ingDto;
                     })
                     .toList();
@@ -114,6 +117,7 @@ public class RecipeMapper {
         dto.setPrepTime(recipe.getPrepTime());
         dto.setCookTime(recipe.getCookTime());
         dto.setServings(recipe.getServings());
+        dto.setVideoUrl(recipe.getVideoUrl());
 
         return dto;
     }

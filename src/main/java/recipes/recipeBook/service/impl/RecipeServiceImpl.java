@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import recipes.recipeBook.dto.ImageDTO;
 import recipes.recipeBook.dto.RecipeDTO;
 import recipes.recipeBook.dto.mapper.RecipeMapper;
@@ -139,6 +140,7 @@ public class RecipeServiceImpl implements RecipeService {
                 ingredient.setName(ingredientDTO.getName());
                 ingredient.setAmount(ingredientDTO.getAmount());
                 ingredient.setUnit(ingredientDTO.getUnit());
+                ingredient.setSection(ingredientDTO.getSection());
                 existingRecipe.getIngredients().add(ingredient);
             }
         }
@@ -152,6 +154,8 @@ public class RecipeServiceImpl implements RecipeService {
             }
             existingRecipe.setMainImageIndex(recipeDTO.getMainImageIndex());
         }
+
+        existingRecipe.setVideoUrl(recipeDTO.getVideoUrl());
 
         return recipeRepository.save(existingRecipe);
     }
@@ -234,5 +238,18 @@ public class RecipeServiceImpl implements RecipeService {
         });
 
         return recipes;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Recipe> findBookmarkedRecipes(User user, Pageable pageable) {
+        return recipeRepository.findBookmarkedRecipesByUserId(user.getId(), pageable);
+    }
+
+    @Override
+    @Transactional
+    public void deleteRecipe(Long id) {
+        recipeRepository.removeRecipeFromAllBookmarks(id);
+        recipeRepository.deleteById(id);
     }
 }

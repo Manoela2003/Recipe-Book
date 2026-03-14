@@ -67,6 +67,9 @@
     color: white;
     font-size: 1em;
     font-weight: 500;
+    cursor: default;
+    pointer-events: none;
+    user-select: none;
 }
 
 .logout-btn,

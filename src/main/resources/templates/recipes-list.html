@@ -10,10 +10,14 @@
 
 <div class="recipes-container">
     <div class="page-header">
-        <h2 th:if="${isMyRecipes != null && isMyRecipes}">My Recipes</h2>
-        <h2 th:if="${isMyRecipes == null}" th:text="${selectedCategory != null ? selectedCategory.displayName + ' Recipes' : 'All Recipes'}"></h2>
+        <h2 th:if="${isMyRecipes == true}">My Recipes</h2>
+        <h2 th:if="${isFavorites == true}">Bookmarked Recipes</h2>
 
-        <a th:if="${selectedCategory != null && isMyRecipes == null}" th:href="@{/recipes}" class="clear-filter-btn">
+        <h2 th:if="${isMyRecipes != true and isFavorites != true}"
+            th:text="${selectedCategory != null ? selectedCategory.displayName + ' Recipes' : 'All Recipes'}"></h2>
+
+        <a th:if="${selectedCategory != null and isMyRecipes != true and isFavorites != true}"
+           th:href="@{/recipes}" class="clear-filter-btn">
             &times; Clear Filter
         </a>
     </div>

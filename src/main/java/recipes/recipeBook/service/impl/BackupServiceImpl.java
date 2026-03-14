@@ -6,9 +6,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import recipes.recipeBook.dto.BackupDTO;
-import recipes.recipeBook.dto.RecipeDTO;
-import recipes.recipeBook.dto.UserBackupDTO;
+import recipes.recipeBook.dto.*;
 import recipes.recipeBook.dto.mapper.RecipeMapper;
 import recipes.recipeBook.entity.Recipe;
 import recipes.recipeBook.entity.User;
@@ -74,13 +72,26 @@ public class BackupServiceImpl implements BackupService {
         }).collect(Collectors.toList());
 
         List<Recipe> recipes = recipeRepository.findAll();
-        List<RecipeDTO> recipeDTOs = recipes.stream()
-                .map(RecipeMapper::mapToRecipeDTO)
-                .collect(Collectors.toList());
+        List<RecipeBackupDTO> recipeBackups = recipes.stream().map(recipe -> {
+            RecipeBackupDTO backupRecord = new RecipeBackupDTO();
+            backupRecord.setRecipeDTO(RecipeMapper.mapToRecipeDTO(recipe));
+
+            if (recipe.getImages() != null) {
+                List<ImageBackupDTO> imageBackups = recipe.getImages().stream().map(img -> {
+                    ImageBackupDTO imgDto = new ImageBackupDTO();
+                    imgDto.setImage(img.getImage());
+                    imgDto.setMimeType(img.getMimeType());
+                    return imgDto;
+                }).collect(Collectors.toList());
+                backupRecord.setImages(imageBackups);
+            }
+
+            return backupRecord;
+        }).collect(Collectors.toList());
 
         BackupDTO backup = new BackupDTO();
         backup.setUsers(userDTOs);
-        backup.setRecipes(recipeDTOs);
+        backup.setRecipes(recipeBackups);
 
         return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(backup);
     }
@@ -106,7 +117,9 @@ public class BackupServiceImpl implements BackupService {
         }
 
         if (backup.getRecipes() != null) {
-            for (RecipeDTO recipeDTO : backup.getRecipes()) {
+            for (RecipeBackupDTO backupRecord : backup.getRecipes()) {
+                RecipeDTO recipeDTO = backupRecord.getRecipeDTO();
+
                 if (recipeDTO.getId() != null && recipeRepository.existsById(recipeDTO.getId())) {
                     continue;
                 }
@@ -115,6 +128,28 @@ public class BackupServiceImpl implements BackupService {
                         .orElseThrow(() -> new RuntimeException("Author missing: " + recipeDTO.getAuthorUsername()));
 
                 Recipe recipe = RecipeMapper.mapToRecipe(recipeDTO, author, tagService);
+
+                if (backupRecord.getImages() != null && !backupRecord.getImages().isEmpty()) {
+                    if (recipe.getImages() == null) {
+                        recipe.setImages(new java.util.ArrayList<>());
+                    }
+
+                    for (ImageBackupDTO imgDto : backupRecord.getImages()) {
+                        recipes.recipeBook.entity.Image image = new recipes.recipeBook.entity.Image();
+                        image.setImage(imgDto.getImage());
+                        image.setMimeType(imgDto.getMimeType());
+                        image.setRecipe(recipe);
+                        recipe.getImages().add(image);
+                    }
+
+                    int mainIndex = recipeDTO.getMainImageIndex();
+                    if (mainIndex >= 0 && mainIndex < recipe.getImages().size()) {
+                        recipe.setMainImageIndex(mainIndex);
+                    } else if (!recipe.getImages().isEmpty()) {
+                        recipe.setMainImageIndex(0);
+                    }
+                }
+
                 recipeRepository.save(recipe);
             }
         }

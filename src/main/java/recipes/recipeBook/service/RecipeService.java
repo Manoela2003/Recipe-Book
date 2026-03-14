@@ -19,8 +19,8 @@ public interface RecipeService {
     long countRecipes();
     Page<Recipe> searchByTitle(String query, Pageable pageable);
     Page<Recipe> searchByCategoryAndTitle(RecipeCategory category, String query, Pageable pageable);
-
     Page<Recipe> findMyRecipes(User author, Pageable pageable);
-
     Page<Recipe> searchMyRecipesByTitle(User author, String query, Pageable pageable);
+    Page<Recipe> findBookmarkedRecipes(User user, Pageable pageable);
+    void deleteRecipe(Long id);
 }

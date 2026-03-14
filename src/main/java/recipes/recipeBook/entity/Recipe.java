@@ -2,6 +2,8 @@ package recipes.recipeBook.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -28,8 +30,16 @@ public class Recipe {
     )
     private List<Tag> tags = new ArrayList<>();
 
-    @ManyToOne
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id")
     private User author;
+
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "recipe_id")
@@ -50,12 +60,12 @@ public class Recipe {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Review> reviews = new ArrayList<>();
-
     @Transient
     private String imageBase64;
     private Date createdOn;
+
+    @Column(name = "video_url")
+    private String videoUrl;
 
     public Image getMainImage() {
         if (mainImageIndex != null && images != null && mainImageIndex >= 0 && mainImageIndex < images.size()) {

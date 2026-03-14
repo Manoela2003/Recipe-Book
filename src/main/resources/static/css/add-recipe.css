@@ -221,6 +221,12 @@ body {
     min-width: 100px;
 }
 
+#ingredient-list .dynamic-list-item input:nth-of-type(1) {
+    flex: 1.5;
+    background-color: #f8f9fa;
+    border: 1.5px dashed var(--primary-color);
+}
+
 .add-btn {
     background-color: var(--primary-color);
     color: white;
