@@ -86,6 +86,9 @@ public class RecipeController {
                     } else if (path.contains("/recipes/favorites")) {
                         backUrl = exactUrl;
                         backText = "Bookmarked Recipes";
+                    } else if (path.contains("/recipes/fridge/results")) {
+                        backUrl = exactUrl;
+                        backText = "Fridge Search Results";
                     } else if (path.contains("/home") || path.equals("/")) {
                         backUrl = "/home";
                         backText = "Home";
@@ -525,6 +528,7 @@ public class RecipeController {
     @GetMapping("/favorites")
     public String getFavoriteRecipes(
             @PageableDefault(size = 9) Pageable pageable,
+            @RequestParam(value = "query", required = false) String query,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             Model model,
             HttpServletRequest request) {
@@ -533,10 +537,16 @@ public class RecipeController {
             return "redirect:/login";
         }
 
-        Page<Recipe> recipes = recipeService.findBookmarkedRecipes(userDetails.getUser(), pageable);
+        Page<Recipe> recipes;
+        if (query != null && !query.trim().isEmpty()) {
+            recipes = recipeService.searchBookmarkedRecipesByTitle(userDetails.getUser(), query.trim(), pageable);
+        } else {
+            recipes = recipeService.findBookmarkedRecipes(userDetails.getUser(), pageable);
+        }
 
         model.addAttribute("recipes", recipes);
         model.addAttribute("isFavorites", true);
+        model.addAttribute("searchQuery", query);
         model.addAttribute("requestURI", request.getRequestURI());
 
         return "recipes-list";
@@ -567,6 +577,32 @@ public class RecipeController {
             redirectAttributes.addFlashAttribute("errorMessage", "Failed to delete recipe: " + e.getMessage());
             return "redirect:/recipes/" + id;
         }
+    }
+
+    @GetMapping("/fridge")
+    public String showFridgeSearch(Model model, HttpServletRequest request) {
+        model.addAttribute("requestURI", request.getRequestURI());
+        return "fridge-search";
+    }
+
+    @GetMapping("/fridge/results")
+    public String getFridgeResults(
+            @RequestParam(value = "ingredients", required = false) List<String> ingredients,
+            @PageableDefault(size = 9) Pageable pageable,
+            Model model,
+            HttpServletRequest request) {
+
+        if (ingredients == null || ingredients.isEmpty()) {
+            return "redirect:/recipes/fridge";
+        }
+
+        Page<Recipe> recipes = recipeService.searchByFridge(ingredients, pageable);
+
+        model.addAttribute("recipes", recipes);
+        model.addAttribute("searchedIngredients", ingredients);
+        model.addAttribute("requestURI", request.getRequestURI());
+
+        return "fridge-results";
     }
 
     @ExceptionHandler(NotFoundException.class)

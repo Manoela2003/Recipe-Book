@@ -22,5 +22,7 @@ public interface RecipeService {
     Page<Recipe> findMyRecipes(User author, Pageable pageable);
     Page<Recipe> searchMyRecipesByTitle(User author, String query, Pageable pageable);
     Page<Recipe> findBookmarkedRecipes(User user, Pageable pageable);
+    Page<Recipe> searchBookmarkedRecipesByTitle(User user, String query, Pageable pageable);
     void deleteRecipe(Long id);
+    Page<Recipe> searchByFridge(List<String> ingredients, Pageable pageable);
 }

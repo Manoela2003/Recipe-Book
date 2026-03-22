@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <th:block th:replace="~{fragments/head :: head('Server Error | Recipe Book')}"/>
+  <link rel="stylesheet" th:href="@{/css/error.css}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<div class="error-container">
+  <div class="error-content">
+    <i class="fa fa-server error-icon"></i>
+    <h1>500</h1>
+    <h2>Internal Server Error</h2>
+    <p>Looks like we spilled something in the kitchen! Something went wrong on our end, but we are working on cleaning it up.</p>
+    <a th:href="@{/home}" class="error-home-btn"><i class="fa fa-home"></i> Back to Home</a>
+  </div>
+</div>
+
+</body>
+</html>

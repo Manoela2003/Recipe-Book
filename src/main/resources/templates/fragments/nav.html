@@ -9,18 +9,22 @@
             <li>
                 <a th:href="@{/recipes}" th:classappend="${requestURI == '/recipes'} ? 'active' : ''">Recipes</a>
             </li>
-            <li>
+            <li sec:authorize="isAuthenticated()">
                 <a th:href="@{/recipes/my-recipes}"
                    th:classappend="${requestURI == '/recipes/my-recipes'} ? 'active' : ''">My Recipes</a>
             </li>
-            <li>
-                <a th:href="@{/recipes/add}" th:classappend="${requestURI == '/recipes/add'} ? 'active' : ''">Add
-                    Recipe</a>
+            <li sec:authorize="isAuthenticated()">
+                <a th:href="@{/recipes/add}" th:classappend="${requestURI == '/recipes/add'} ? 'active' : ''">Add Recipe</a>
             </li>
-            <li>
-                <a th:href="@{/recipes/favorites}" class="nav-link" sec:authorize="isAuthenticated()"
+            <li sec:authorize="isAuthenticated()">
+                <a th:href="@{/recipes/favorites}" class="nav-link"
                    th:classappend="${requestURI == '/recipes/favorites'} ? 'active' : ''">
                     <i class="fa fa-bookmark"></i> Bookmarks</a>
+            </li>
+            <li sec:authorize="isAuthenticated()">
+                <a th:href="@{/recipes/fridge}" th:classappend="${requestURI != null and requestURI.startsWith('/recipes/fridge')} ? 'active' : ''">
+                    <i class="fa fa-snowflake"></i> Fridge Search
+                </a>
             </li>
             <li sec:authorize="hasRole('ADMIN')">
                 <a th:href="@{/admin}" th:classappend="${requestURI == '/admin'} ? 'active' : ''">Admin Panel</a>
@@ -30,7 +34,7 @@
         <div class="nav-right">
             <div class="nav-account" th:if="${#authorization.expression('isAuthenticated()')}">
                 <span>Hello, <span th:text="${#authentication.name}">User</span></span>
-                <a th:href="@{/logout}" class="logout-btn">Log Out</a>
+                <a th:href="@{/logout}" class="logout-btn" onclick="sessionStorage.clear()">Log Out</a>
             </div>
 
             <div class="nav-login" th:if="${#authorization.expression('!isAuthenticated()')}">

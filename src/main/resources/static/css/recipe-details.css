@@ -1046,3 +1046,35 @@ body {
 .reload-ig-btn i {
     margin-right: 6px;
 }
+
+.btn-share {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 180px;
+    box-sizing: border-box;
+    margin: 0;
+    background-color: #3498db;
+    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+}
+
+.btn-share:hover {
+    background-color: #2980b9;
+    box-shadow: 0 6px 14px rgba(41, 128, 185, 0.4);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.btn-share:active {
+    transform: scale(0.97);
+}

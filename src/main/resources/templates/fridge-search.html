@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/head :: head('What\'s in my Fridge? | Recipe Book')}"/>
+    <link rel="stylesheet" th:href="@{/css/fridge-search.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<div class="fridge-container">
+    <div class="fridge-header">
+        <i class="fa fa-snowflake"></i>
+        <h1>What's in my Fridge?</h1>
+        <p>Type an ingredient and press Enter to add it to your basket. We'll find recipes you can make right now!</p>
+    </div>
+
+    <div class="ingredient-input-wrapper">
+        <input type="text" id="fridge-input" placeholder="e.g. Chicken, Rice, Broccoli..." autocomplete="off">
+    </div>
+
+    <div class="basket-container" id="basket">
+        <div class="empty-basket-text" id="empty-text">Your basket is empty</div>
+    </div>
+
+    <form id="fridge-form" th:action="@{/recipes/fridge/results}" method="get">
+        <button type="submit" class="search-fridge-btn"><i class="fa fa-search"></i> Find Recipes</button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const input = document.getElementById('fridge-input');
+        const basket = document.getElementById('basket');
+        const emptyText = document.getElementById('empty-text');
+        const form = document.getElementById('fridge-form');
+        let ingredientsList = [];
+
+        const savedIngredients = JSON.parse(sessionStorage.getItem('fridgeIngredients')) || [];
+        savedIngredients.forEach(ing => addIngredientToBasket(ing, false));
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                const val = input.value.trim().replace(/,/g, '');
+                if (val && !ingredientsList.includes(val.toLowerCase())) {
+                    addIngredientToBasket(val, true);
+                    input.value = '';
+                }
+            }
+        });
+
+        form.addEventListener('submit', (e) => {
+            if (ingredientsList.length === 0) {
+                e.preventDefault();
+            }
+        });
+
+        function addIngredientToBasket(name, saveToStorage = true) {
+            const lowerName = name.toLowerCase();
+            if (ingredientsList.includes(lowerName)) return;
+
+            ingredientsList.push(lowerName);
+            emptyText.style.display = 'none';
+
+            if (saveToStorage) {
+                sessionStorage.setItem('fridgeIngredients', JSON.stringify(ingredientsList));
+            }
+
+            const chip = document.createElement('div');
+            chip.className = 'fridge-chip';
+            chip.innerHTML = `
+                ${name}
+                <button type="button" onclick="removeIngredient(this, '${lowerName}')">&times;</button>
+            `;
+            basket.appendChild(chip);
+
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'ingredients';
+            hiddenInput.value = lowerName;
+            hiddenInput.id = 'hidden-' + lowerName;
+            form.appendChild(hiddenInput);
+        }
+
+        window.removeIngredient = function(btn, name) {
+            btn.parentElement.remove();
+            ingredientsList = ingredientsList.filter(i => i !== name);
+            sessionStorage.setItem('fridgeIngredients', JSON.stringify(ingredientsList));
+
+            const hiddenInput = document.getElementById('hidden-' + name);
+            if (hiddenInput) hiddenInput.remove();
+
+            if (ingredientsList.length === 0) {
+                emptyText.style.display = 'block';
+            }
+        }
+    });
+</script>
+</body>
+</html>

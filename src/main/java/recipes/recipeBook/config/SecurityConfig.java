@@ -3,6 +3,7 @@ package recipes.recipeBook.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -20,13 +21,13 @@ public class SecurityConfig {
     private static final String HOME_PAGE = "/home";
     private static final String LOGOUT_SUCCESS_URL = "/home";
     private static final String IMAGES = "/images/**";
-    private static final String RECIPES = "/recipes/**";
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", HOME_PAGE, REGISTER_PAGE, LOGIN_PAGE, CSS_RESOURCES, IMAGES).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/recipes", "/recipes/{id:\\d+}", "/recipes/{id:\\d+}/export/pdf").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

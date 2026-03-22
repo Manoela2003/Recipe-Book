@@ -129,6 +129,10 @@
     </div>
 
     <div class="recipe-action-buttons">
+        <button type="button" class="btn-share" onclick="shareRecipe()">
+            <i class="fa fa-share-alt"></i> Share Recipe
+        </button>
+
         <a th:href="@{'/recipes/' + ${recipe.id} + '/export/pdf'}" class="btn-download">
             <i class="fa fa-file-pdf"></i> Download PDF
         </a>
@@ -415,6 +419,48 @@
             videoContainer.innerHTML = `<a href="${url}" target="_blank" class="btn-external-video"><i class="fa fa-external-link-alt"></i> Watch Video Tutorial on External Site</a>`;
         }
     });
+
+    function shareRecipe() {
+        const recipeUrl = window.location.href;
+        const recipeTitle = document.title;
+
+        if (navigator.share) {
+            navigator.share({
+                title: recipeTitle,
+                url: recipeUrl
+            }).catch(console.error);
+        } else {
+            navigator.clipboard.writeText(recipeUrl).then(() => {
+                showJsToast('Link copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+            });
+        }
+    }
+
+    function showJsToast(message) {
+        let container = document.querySelector('.toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        toast.className = 'toast-notification toast-success';
+        toast.innerHTML = `
+        <i class="fa fa-check-circle"></i>
+        <span>${message}</span>
+        <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+    `;
+
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.animation = 'slideOutRight 0.5s forwards';
+            setTimeout(() => toast.remove(), 500);
+        }, 3000);
+    }
 </script>
 
 <div id="deleteConfirmModal" class="modal-overlay" style="display: none;">

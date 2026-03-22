@@ -11,6 +11,7 @@ import recipes.recipeBook.entity.Recipe;
 import recipes.recipeBook.entity.RecipeCategory;
 import recipes.recipeBook.entity.User;
 
+import java.util.List;
 import java.util.Set;
 
 @Repository
@@ -26,4 +27,10 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
     @Modifying
     @Query(value = "DELETE FROM user_bookmarks WHERE recipe_id = :recipeId", nativeQuery = true)
     void removeRecipeFromAllBookmarks(@Param("recipeId") Long recipeId);
+    @Query("SELECT DISTINCT r FROM Recipe r JOIN r.ingredients i WHERE LOWER(i.name) LIKE LOWER(CONCAT('%', :ingredient, '%'))")
+    List<Recipe> findRecipesContainingIngredient(@Param("ingredient") String ingredient);
+    @Query(value = "SELECT * FROM recipes WHERE id IN (SELECT recipe_id FROM user_bookmarks WHERE user_id = :userId) AND LOWER(title) LIKE LOWER(CONCAT('%', :query, '%'))",
+            countQuery = "SELECT count(*) FROM recipes WHERE id IN (SELECT recipe_id FROM user_bookmarks WHERE user_id = :userId) AND LOWER(title) LIKE LOWER(CONCAT('%', :query, '%'))",
+            nativeQuery = true)
+    Page<Recipe> searchBookmarkedRecipesNative(@Param("userId") Long userId, @Param("query") String query, Pageable pageable);
 }

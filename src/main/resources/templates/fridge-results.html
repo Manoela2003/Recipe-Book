@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:replace="~{fragments/head :: head('Fridge Results | Recipe Book')}"/>
+    <link rel="stylesheet" th:href="@{/css/recipes-list.css}">
+    <link rel="stylesheet" th:href="@{/css/fridge-results.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div th:replace="~{fragments/nav :: nav}"></div>
+
+<div class="recipes-container">
+    <div class="fridge-results-header">
+        <h1><i class="fa fa-magic"></i> Fridge Magic</h1>
+        <p>Here are the recipes you can make using:</p>
+
+        <div class="searched-ingredients">
+            <span class="ingredient-badge" th:each="ingredient : ${searchedIngredients}" th:text="${ingredient}"></span>
+        </div>
+
+        <a th:href="@{/recipes/fridge}" class="back-to-fridge-btn"><i class="fa fa-edit"></i> Edit Ingredients</a>
+    </div>
+
+    <div th:if="${recipes.totalElements == 0}" class="no-recipes-found">
+        <i class="fa fa-folder-open fa-4x"></i>
+        <h2>No recipes found!</h2>
+        <p>We couldn't find any recipes that use all of those exact ingredients together.</p>
+        <p>Try removing a few items from your basket to get broader results.</p>
+    </div>
+
+    <div class="recipes-grid" th:if="${recipes.totalElements > 0}">
+        <div class="recipe-card" th:each="recipe : ${recipes.content}">
+            <div class="card-image-wrapper">
+                <img th:src="${recipe.mainImage != null ? recipe.mainImage.parseImage() : '/images/cover-image-recipes.png'}"
+                     alt="Recipe Image" loading="lazy">
+                <div class="card-category" th:text="${recipe.primaryCategory}"></div>
+            </div>
+
+            <div class="card-content">
+                <h3 class="card-title" th:text="${recipe.title}"></h3>
+
+                <div class="card-meta">
+                    <span title="Total Time"><i class="fa fa-clock"></i> <span th:text="${recipe.prepTime + recipe.cookTime} + 'm'"></span></span>
+                    <span title="Author" th:if="${recipe.author != null}"><i class="fa fa-user"></i> <span th:text="${recipe.author.username}"></span></span>
+                </div>
+
+                <a th:href="@{'/recipes/' + ${recipe.id}}" class="view-recipe-btn">View Recipe</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="pagination-container" th:if="${recipes.totalPages > 1}">
+        <ul class="pagination">
+            <li th:classappend="${recipes.first ? 'disabled' : ''}">
+                <a th:href="@{/recipes/fridge/results(ingredients=${searchedIngredients}, page=${recipes.number - 1})}"><i class="fa fa-chevron-left"></i> Prev</a>
+            </li>
+
+            <li th:each="i : ${#numbers.sequence(0, recipes.totalPages - 1)}"
+                th:classappend="${i == recipes.number ? 'active' : ''}">
+                <a th:href="@{/recipes/fridge/results(ingredients=${searchedIngredients}, page=${i})}" th:text="${i + 1}"></a>
+            </li>
+
+            <li th:classappend="${recipes.last ? 'disabled' : ''}">
+                <a th:href="@{/recipes/fridge/results(ingredients=${searchedIngredients}, page=${recipes.number + 1})}">Next <i class="fa fa-chevron-right"></i></a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,128 @@
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+}
+
+.fridge-container {
+    max-width: 700px;
+    margin: 4rem auto;
+    background-color: var(--card-background);
+    padding: 3rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.fridge-header i {
+    font-size: 3.5rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.fridge-header h1 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.fridge-header p {
+    color: #7f8c8d;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+.ingredient-input-wrapper {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.ingredient-input-wrapper input {
+    width: 100%;
+    padding: 18px 25px;
+    font-size: 1.2rem;
+    border: 2px solid var(--secondary-color);
+    border-radius: 30px;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.ingredient-input-wrapper input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(209, 118, 118, 0.15);
+}
+
+.basket-container {
+    min-height: 100px;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #bdc3c7;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-content: flex-start;
+    margin-bottom: 2rem;
+}
+
+.empty-basket-text {
+    color: #95a5a6;
+    width: 100%;
+    text-align: center;
+    margin-top: 1.5rem;
+    font-style: italic;
+}
+
+.fridge-chip {
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    animation: popIn 0.3s ease-out forwards;
+}
+
+.fridge-chip button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+.fridge-chip button:hover {
+    color: var(--primary-color);
+}
+
+.search-fridge-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 16px 40px;
+    border-radius: 30px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(209, 118, 118, 0.3);
+    width: 100%;
+}
+
+.search-fridge-btn:hover {
+    background-color: var(--hover-color);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(181, 100, 100, 0.4);
+}
+
+@keyframes popIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}

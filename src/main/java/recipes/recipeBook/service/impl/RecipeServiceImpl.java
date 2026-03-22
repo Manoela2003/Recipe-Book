@@ -2,6 +2,7 @@ package recipes.recipeBook.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -251,5 +252,40 @@ public class RecipeServiceImpl implements RecipeService {
     public void deleteRecipe(Long id) {
         recipeRepository.removeRecipeFromAllBookmarks(id);
         recipeRepository.deleteById(id);
+    }
+
+    @Override
+    public Page<Recipe> searchBookmarkedRecipesByTitle(User user, String query, Pageable pageable) {
+        return recipeRepository.searchBookmarkedRecipesNative(user.getId(), query, pageable);
+    }
+
+    @Override
+    public Page<Recipe> searchByFridge(List<String> ingredients, Pageable pageable) {
+        if (ingredients == null || ingredients.isEmpty()) {
+            return new PageImpl<>(new ArrayList<>(), pageable, 0);
+        }
+
+        java.util.List<Recipe> matchedRecipes = null;
+
+        for (String ingredient : ingredients) {
+            if (ingredient != null && !ingredient.trim().isEmpty()) {
+                java.util.List<Recipe> recipesForIngredient = recipeRepository.findRecipesContainingIngredient(ingredient.trim());
+                if (matchedRecipes == null) {
+                    matchedRecipes = new java.util.ArrayList<>(recipesForIngredient);
+                } else {
+                    matchedRecipes.retainAll(recipesForIngredient);
+                }
+            }
+        }
+
+        if (matchedRecipes == null) {
+            matchedRecipes = new java.util.ArrayList<>();
+        }
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), matchedRecipes.size());
+        java.util.List<Recipe> pageContent = start <= end ? matchedRecipes.subList(start, end) : new java.util.ArrayList<>();
+
+        return new org.springframework.data.domain.PageImpl<>(pageContent, pageable, matchedRecipes.size());
     }
 }
